@@ -55,9 +55,15 @@ int main(int argc, char *argv[]) {
         }
     }
     uint64_t real_offset = (inj->p_offset + inj->p_filesz + 15 ) & ~(0xF);
+    //
+    uint64_t payload_va = inj->p_vaddr + (real_offset - inj->p_offset);
+
     int anchor_relative_pos = patch_offset + 4 + 4 + 1;
-    int64_t anchor_file_offset = real_offset + anchor_relative_pos;
-    int32_t jump_diff = (int32_t)(temp->e_entry - anchor_file_offset);
+    //
+    uint64_t anchor_va = payload_va + anchor_relative_pos;
+
+    // int64_t anchor_file_offset = real_offset + anchor_relative_pos;
+    int32_t jump_diff = (int32_t)(temp->e_entry - anchor_va);
     memcpy(payload_bin + patch_offset, &jump_diff, sizeof(int32_t));
     unsigned char *injcode = MOVE_ADDRESS(temp, real_offset);
     temp->e_entry = inj->p_vaddr + (real_offset - inj->p_offset);
@@ -66,9 +72,10 @@ int main(int argc, char *argv[]) {
     inj->p_filesz = increased_size;
     inj->p_memsz = increased_size;
     memcpy(injcode, &payload_bin, payload_bin_len);
+    int re_size = (size + 4095) & ~(0xfff);
     int out_fd = open("Woody", O_WRONLY | O_CREAT | O_TRUNC, 0755);
     if (out_fd != -1) {
-        write(out_fd, temp, size); 
+        write(out_fd, temp, re_size); 
         close(out_fd);
     }
     munmap(temp, size);
