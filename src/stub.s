@@ -12,6 +12,8 @@ bits 64
 	%define CTX_BP      rbp
 	%define PTR_SIZE    8
 	%define CODE_SIZE   123
+	%define ORI_BASE    r10
+	%define META_ADD    r8
 %else
 bits 32
 	%define CTX_AX      eax
@@ -23,6 +25,8 @@ bits 32
 	%define CTX_SP      esp
 	%define CTX_BP      ebp
 	%define CODE_SIZE   123
+	%define ORI_BASE    esi
+	%define META_ADD    edi
 %endif
 
 %ifdef ARCH_64
@@ -123,13 +127,13 @@ bits 32
 %ifdef ARCH_64
 	%macro USE_MPROTEC 3
 	bits 64
-		INIT_RESI CTX_AX
 		INIT_RESI CTX_DI
-		INIT_RESI CTX_SI
-		INIT_RESI CTX_DX
 		mov CTX_DI, %1
+		INIT_RESI CTX_SI
 		mov CTX_SI, %2
+		INIT_RESI CTX_DX
 		mov CTX_DX, %3
+		INIT_RESI CTX_AX
 		mov CTX_AX, 10
 		syscall
 		CHECK_ERROR
@@ -137,13 +141,13 @@ bits 32
 %else
 	%macro USE_MPROTEC 3
 	bits 32
-		INIT_RESI CTX_AX
 		INIT_RESI CTX_BX
+		mov CTX_BX, %1
 		INIT_RESI CTX_CX
+		mov CTX_CX, %2
 		INIT_RESI CTX_DX
-		mov CTX_DI, %1
-		mov CTX_SI, %2
 		mov CTX_DX, %3
+		INIT_RESI CTX_AX
 		mov CTX_AX, 125
 		syscall
 		CHECK_ERROR
@@ -192,7 +196,7 @@ bits 32
 		js %%error
 		jmp %%done
 	%%error:
-		INIT_RESI CTX_DI, CTX_DI
+		INIT_RESI CTX_DI
 		neg CTX_AX
 		mov CTX_DI, CTX_AX
 		mov CTX_AX, 60
@@ -206,7 +210,7 @@ bits 32
 		js %%error
 		jmp %%done
 	%%error:
-		INIT_RESI CTX_BX, CTX_BX
+		INIT_RESI CTX_BX
 		neg CTX_AX
 		mov CTX_BX, CTX_AX
 		mov CTX_AX, 1
@@ -216,54 +220,96 @@ bits 32
 %endif
 
 ; get GET_DATA_VALUE
-; %1 record key address
-; %2 index
-; %3 destination key value
+; %1 destination key value
+; %2 record key address
+; %3 index
 %macro GET_DATA_VALUE 3
 	INIT_RESI %1
-	INIT_RESI %3
-	FIND_DATA_INDEX %1, %2, 8
-	mov %3, [%1]
+	INIT_RESI %2
+	FIND_DATA_INDEX %2, %3, 8
+	mov %1, [%2]
 %endmacro
 
 ; get META_DATA address **return not value**
 ; %1 record origin meta_data address 
 ; %2 record meta_data * index
-%macro GET_META_DATA 3
+%macro GET_META_DATA 2
 	INIT_RESI %1
-	INIT_RESI %2
 	FIND_DATA_INDEX %1, 6, 8
-	mov %2, (%1 + (8 * %3))
+	add %1, (24 * %2)
 %endmacro
 
 ; get value and insert to destination
-; %1 source value address
-; %2 destination value address
+; %1 destination value address
+; %2 source value address
 %macro INIT_INSERT_VALUE 2
-	INIT_RESI %1
-	mov %2, [%1]
+	mov %1, [%2]
 %endmacro
 
+; %1 decoding start address
+; %2 endsize
+%macro DECODING_QWORD 2
+    INIT_RESI CTX_CX
+    GET_DATA_VALUE CTX_BX, CTX_AX, 4
+	%%_loop_qword:
+	    mov CTX_AX, %2
+	    sub CTX_AX, CTX_CX
+	    cmp CTX_AX, 8
+	    jl %%_remaining
+	    mov CTX_AX, [%1 + CTX_CX]
+	    xor CTX_AX, CTX_BX
+	    mov [%1 + CTX_CX], CTX_AX
+	    add CTX_CX, 8
+	    jmp %%_loop_qword
+	%%_remaining:
+	    cmp CTX_CX, %2
+	    jge %%_done
+	    mov al, [%1 + CTX_CX]
+	    xor al, bl
+	    mov [%1 + CTX_CX], al
+	    inc CTX_CX
+	    jmp %%_remaining
+	%%_done:
+%endmacro
 _stub:
-	INIT_RESI CTX_CX, CTX_CX
-	INIT_RESI CTX_AX, CTX_AX
+	INIT_RESI CTX_CX
+	INIT_RESI CTX_AX
 	FIND_DATA_INDEX CTX_CX, 2, 8
 	FIND_OFFSET CTX_AX, [CTX_CX]
 	push CTX_AX
 	PUSH_ALL_REGISTER
 	INIT_RESI CTX_BP
+	FIND_OFFSET ORI_BASE, 0
 
 _loop:
-	GET_DATA_VALUE CTX_AX, 5, 8
-	cmp [CTX_BP], CTX_AX
+	GET_DATA_VALUE CTX_AX, CTX_DI, 5
+	cmp CTX_BP, CTX_AX
 	je _stub_end
-	jmp _loop
 
 _decryption:
-	GET_META_DATA CTX_AX, CTX_DI, [CTX_BP]
-	INIT_INSERT_VALUE CTX_AX, (CTX_DI + 8) ; p_memsz
-	INIT_INSERT_VALUE CTX_SI, (CTX_DI + 16) ; p_flags
-
+	GET_META_DATA META_ADD, CTX_BP; META_ADD = meta_data [META_ADD] == offset
+	INIT_INSERT_VALUE CTX_AX, META_ADD ; CTX_AX = meta_data [META_ADD] == offset
+	add CTX_AX, ORI_BASE; [META_ADD] is decoding start address
+	INIT_INSERT_VALUE CTX_DX, (META_ADD + 8) ; p_memsz
+	INIT_INSERT_VALUE CTX_SI, (META_ADD + 16) ; p_flags
+	test CTX_SI, 2
+	jnz _skip_mprotec
+	USE_MPROTEC CTX_AX, CTX_DX, 2
+ 
+ _skip_mprotec:
+	GET_META_DATA META_ADD, CTX_BP; META_ADD = meta_data [META_ADD] == offset
+	INIT_INSERT_VALUE CTX_AX, META_ADD ; CTX_AX = meta_data [META_ADD] == offset
+	add CTX_AX, ORI_BASE; [META_ADD] is decoding start address
+	INIT_INSERT_VALUE CTX_DX, (META_ADD + 8) ; p_memsz
+	INIT_INSERT_VALUE CTX_SI, (META_ADD + 16) ; p_flags
+	mov CTX_DI, CTX_AX
+	DECODING_QWORD CTX_DI, CTX_DX
+	inc CTX_BP
+	test CTX_SI, 2
+	jnz _loop
+	USE_MPROTEC CTX_AX, CTX_DX, 2
+	jmp _loop
+;;;;; 스티커 메모를 보자 한계다. 2. mprotect 권한 값 오류 여기서 부터
 
 _stub_end:
 	POP_ALL_REGISTER
