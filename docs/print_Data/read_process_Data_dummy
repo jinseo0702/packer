@@ -1,0 +1,155 @@
+My PID: 80881
+
+
+Found ELF at base address: 0x5be95e31b000
+
+==================================================================
+ELF HEADER (from running process memory)
+==================================================================
+e_type:       0x3
+e_machine:    0x3e
+e_version:    0x1
+e_entry:      0x10e0
+e_phoff:      0x40
+e_shoff:      0x3748
+e_flags:      0x0
+e_ehsize:     0x40 (64 bytes)
+e_phentsize:  0x38 (56 bytes)
+e_phnum:      0xd (13 entries)
+e_shentsize:  0x40
+e_shnum:      0x1f
+e_shstrndx:   0x1e
+
+==================================================================
+PROGRAM HEADERS (from running process memory)
+==================================================================
+
+[Index 0] PT_PHDR
+  p_type:    0x6
+  p_flags:   0x4 (R--)
+  p_offset:  0x40
+  p_vaddr:   0x40 (runtime: 0x5be95e31b040)
+  p_paddr:   0x40
+  p_filesz:  0x2d8 (728 bytes)
+  p_memsz:   0x2d8 (728 bytes)
+  p_align:   0x8
+
+[Index 1] PT_INTERP
+  p_type:    0x3
+  p_flags:   0x4 (R--)
+  p_offset:  0x318
+  p_vaddr:   0x318 (runtime: 0x5be95e31b318)
+  p_paddr:   0x318
+  p_filesz:  0x1c (28 bytes)
+  p_memsz:   0x1c (28 bytes)
+  p_align:   0x1
+
+[Index 2] PT_LOAD
+  p_type:    0x1
+  p_flags:   0x4 (R--)
+  p_offset:  0x0
+  p_vaddr:   0x0 (runtime: 0x5be95e31b000)
+  p_paddr:   0x0
+  p_filesz:  0x710 (1808 bytes)
+  p_memsz:   0x710 (1808 bytes)
+  p_align:   0x1000
+
+[Index 3] PT_LOAD
+  p_type:    0x1
+  p_flags:   0x5 (R-X)
+  p_offset:  0x1000
+  p_vaddr:   0x1000 (runtime: 0x5be95e31c000)
+  p_paddr:   0x1000
+  p_filesz:  0x28d (653 bytes)
+  p_memsz:   0x28d (653 bytes)
+  p_align:   0x1000
+
+[Index 4] PT_LOAD
+  p_type:    0x1
+  p_flags:   0x4 (R--)
+  p_offset:  0x2000
+  p_vaddr:   0x2000 (runtime: 0x5be95e31d000)
+  p_paddr:   0x2000
+  p_filesz:  0x1a4 (420 bytes)
+  p_memsz:   0x1a4 (420 bytes)
+  p_align:   0x1000
+
+[Index 5] PT_LOAD
+  p_type:    0x1
+  p_flags:   0x6 (RW-)
+  p_offset:  0x2d98
+  p_vaddr:   0x3d98 (runtime: 0x5be95e31ed98)
+  p_paddr:   0x3d98
+  p_filesz:  0x278 (632 bytes)
+  p_memsz:   0x280 (640 bytes)
+  p_align:   0x1000
+
+[Index 6] PT_DYNAMIC
+  p_type:    0x2
+  p_flags:   0x6 (RW-)
+  p_offset:  0x2da8
+  p_vaddr:   0x3da8 (runtime: 0x5be95e31eda8)
+  p_paddr:   0x3da8
+  p_filesz:  0x1f0 (496 bytes)
+  p_memsz:   0x1f0 (496 bytes)
+  p_align:   0x8
+
+[Index 7] PT_NOTE
+  p_type:    0x4
+  p_flags:   0x4 (R--)
+  p_offset:  0x338
+  p_vaddr:   0x338 (runtime: 0x5be95e31b338)
+  p_paddr:   0x338
+  p_filesz:  0x30 (48 bytes)
+  p_memsz:   0x30 (48 bytes)
+  p_align:   0x8
+
+[Index 8] PT_NOTE
+  p_type:    0x4
+  p_flags:   0x4 (R--)
+  p_offset:  0x368
+  p_vaddr:   0x368 (runtime: 0x5be95e31b368)
+  p_paddr:   0x368
+  p_filesz:  0x44 (68 bytes)
+  p_memsz:   0x44 (68 bytes)
+  p_align:   0x4
+
+[Index 9] PT_GNU_PROPERTY
+  p_type:    0x6474e553
+  p_flags:   0x4 (R--)
+  p_offset:  0x338
+  p_vaddr:   0x338 (runtime: 0x5be95e31b338)
+  p_paddr:   0x338
+  p_filesz:  0x30 (48 bytes)
+  p_memsz:   0x30 (48 bytes)
+  p_align:   0x8
+
+[Index 10] PT_GNU_EH_FRAME
+  p_type:    0x6474e550
+  p_flags:   0x4 (R--)
+  p_offset:  0x20c4
+  p_vaddr:   0x20c4 (runtime: 0x5be95e31d0c4)
+  p_paddr:   0x20c4
+  p_filesz:  0x34 (52 bytes)
+  p_memsz:   0x34 (52 bytes)
+  p_align:   0x4
+
+[Index 11] PT_GNU_STACK
+  p_type:    0x6474e551
+  p_flags:   0x6 (RW-)
+  p_offset:  0x0
+  p_vaddr:   0x0 (runtime: 0x5be95e31b000)
+  p_paddr:   0x0
+  p_filesz:  0x0 (0 bytes)
+  p_memsz:   0x0 (0 bytes)
+  p_align:   0x10
+
+[Index 12] PT_GNU_RELRO
+  p_type:    0x6474e552
+  p_flags:   0x4 (R--)
+  p_offset:  0x2d98
+  p_vaddr:   0x3d98 (runtime: 0x5be95e31ed98)
+  p_paddr:   0x3d98
+  p_filesz:  0x268 (616 bytes)
+  p_memsz:   0x268 (616 bytes)
+  p_align:   0x1

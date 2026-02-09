@@ -1,343 +1,369 @@
 #include <elf.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-static void *add_offset(void *base, uint64_t offset)
+static inline void *move_address(void *base, uint64_t offset)
 {
-    return (void *)((unsigned char *)base + offset);
+	unsigned char *p;
+
+	if (base == NULL)
+		return (NULL);
+	p = (unsigned char *)base;
+	return ((void *)(p + offset));
 }
 
-static uint64_t align_up_16(uint64_t value)
+static inline uint8_t check_range(uint64_t offset, uint64_t size, uint64_t limit)
 {
-    return (value + 15ULL) & ~15ULL;
+	if (offset > limit)
+		return (0);
+	return (size <= (limit - offset));
 }
 
-static size_t find_u64_placeholder(const unsigned char *buffer, size_t buffer_size, uint64_t placeholder)
+static int is_hex_char(char c)
 {
-    size_t i = 0;
-
-    while (i + sizeof(uint64_t) <= buffer_size)
-    {
-        uint64_t current_value = 0;
-        memcpy(&current_value, buffer + i, sizeof(uint64_t));
-        if (current_value == placeholder)
-            return i;
-        i++;
-    }
-    return SIZE_MAX;
+	if ('0' <= c && c <= '9')
+		return (1);
+	if ('a' <= c && c <= 'f')
+		return (1);
+	if ('A' <= c && c <= 'F')
+		return (1);
+	return (0);
 }
 
-static int patch_u64_placeholder(unsigned char *buffer, size_t buffer_size, uint64_t placeholder, uint64_t value)
+static uint8_t hex_nibble(char c)
 {
-    size_t offset = find_u64_placeholder(buffer, buffer_size, placeholder);
-
-    if (offset == SIZE_MAX)
-        return 0;
-    memcpy(buffer + offset, &value, sizeof(uint64_t));
-    return 1;
+	if ('0' <= c && c <= '9')
+		return ((uint8_t)(c - '0'));
+	if ('a' <= c && c <= 'f')
+		return ((uint8_t)(c - 'a' + 10));
+	return ((uint8_t)(c - 'A' + 10));
 }
 
-static Elf64_Phdr *find_first_load_segment(Elf64_Phdr *program_headers, uint16_t header_count)
+static int parse_hex_key(const char *hex, uint8_t **out_key, size_t *out_key_len)
 {
-    uint16_t index = 0;
+	size_t	hex_len;
+	size_t	i;
+	size_t	j;
+	uint8_t	*key;
 
-    while (index < header_count)
-    {
-        if (program_headers[index].p_type == PT_LOAD)
-            return &program_headers[index];
-        index++;
-    }
-    return NULL;
+	if (hex == NULL || out_key == NULL || out_key_len == NULL)
+		return (-1);
+	if (hex[0] == '0' && (hex[1] == 'x' || hex[1] == 'X'))
+		hex += 2;
+	hex_len = strlen(hex);
+	if (hex_len == 0)
+		return (-1);
+	for (i = 0; i < hex_len; i++)
+	{
+		if (!is_hex_char(hex[i]))
+			return (-1);
+	}
+	*out_key_len = (hex_len + 1) / 2;
+	key = (uint8_t *)malloc(*out_key_len);
+	if (key == NULL)
+		return (-1);
+	i = 0;
+	j = 0;
+	if ((hex_len & 1) != 0)
+	{
+		key[j++] = hex_nibble(hex[i++]);
+	}
+	while (i < hex_len)
+	{
+		key[j] = (uint8_t)((hex_nibble(hex[i]) << 4) | hex_nibble(hex[i + 1]));
+		i += 2;
+		j++;
+	}
+	*out_key = key;
+	return (0);
 }
 
-static Elf64_Phdr *find_executable_load_segment(Elf64_Phdr *program_headers, uint16_t header_count, uint16_t *segment_index)
+typedef struct s_range
 {
-    uint16_t index = 0;
+	uint64_t	start;
+	uint64_t	end;
+}	t_range;
 
-    while (index < header_count)
-    {
-        if (program_headers[index].p_type == PT_LOAD && (program_headers[index].p_flags & PF_X))
-        {
-            *segment_index = index;
-            return &program_headers[index];
-        }
-        index++;
-    }
-    return NULL;
+static void sort_ranges(t_range *ranges, size_t n)
+{
+	size_t	i;
+	size_t	j;
+
+	i = 0;
+	while (i < n)
+	{
+		j = i + 1;
+		while (j < n)
+		{
+			if (ranges[j].start < ranges[i].start)
+			{
+				t_range tmp = ranges[i];
+				ranges[i] = ranges[j];
+				ranges[j] = tmp;
+			}
+			j++;
+		}
+		i++;
+	}
 }
 
-static uint64_t find_next_load_offset(Elf64_Phdr *program_headers, uint16_t header_count, uint64_t current_offset)
+static void xor_encrypt_range(uint8_t *buf, uint64_t start, uint64_t end,
+	const uint8_t *key, size_t key_len)
 {
-    uint16_t index = 0;
-    uint64_t next_offset = UINT64_MAX;
+	uint64_t	i;
 
-    while (index < header_count)
-    {
-        if (program_headers[index].p_type == PT_LOAD && program_headers[index].p_offset > current_offset)
-        {
-            if (program_headers[index].p_offset < next_offset)
-                next_offset = program_headers[index].p_offset;
-        }
-        index++;
-    }
-    return next_offset;
+	if (buf == NULL || key == NULL || key_len == 0)
+		return ;
+	i = start;
+	while (i < end)
+	{
+		buf[i] ^= key[i % key_len];
+		i++;
+	}
 }
 
-static void xor_encrypt_segment_like_stub(unsigned char *file_bytes, size_t file_size, uint64_t segment_offset, uint64_t segment_filesz, uint64_t xor_key)
+static void xor_encrypt_excluding_ranges(uint8_t *buf, uint64_t buf_size,
+	t_range *skip, size_t skip_count, const uint8_t *key, size_t key_len)
 {
-    uint64_t processed = 0;
-    uint64_t max_size = segment_filesz;
+	uint64_t	pos;
+	size_t		i;
 
-    if (segment_offset >= file_size)
-        return;
-    if (segment_filesz > (uint64_t)(file_size - segment_offset))
-        max_size = (uint64_t)(file_size - segment_offset);
-    while (processed + 8ULL <= max_size)
-    {
-        uint64_t qword_value = 0;
-        memcpy(&qword_value, file_bytes + segment_offset + processed, sizeof(uint64_t));
-        qword_value ^= xor_key;
-        memcpy(file_bytes + segment_offset + processed, &qword_value, sizeof(uint64_t));
-        processed += 8ULL;
-    }
-    while (processed < max_size)
-    {
-        file_bytes[segment_offset + processed] ^= (unsigned char)xor_key;
-        processed++;
-    }
+	if (skip_count > 1)
+		sort_ranges(skip, skip_count);
+	pos = 0;
+	i = 0;
+	while (i < skip_count && pos < buf_size)
+	{
+		if (skip[i].start > pos)
+			xor_encrypt_range(buf, pos, skip[i].start, key, key_len);
+		if (skip[i].end > pos)
+			pos = skip[i].end;
+		i++;
+	}
+	if (pos < buf_size)
+		xor_encrypt_range(buf, pos, buf_size, key, key_len);
 }
 
-static void xor_encrypt_range_excluding(unsigned char *file_bytes,
-                                       size_t file_size,
-                                       uint64_t range_offset,
-                                       uint64_t range_size,
-                                       uint64_t exclude_offset,
-                                       uint64_t exclude_size,
-                                       uint64_t xor_key)
+static int write_all(int fd, const void *buf, size_t size)
 {
-    uint64_t range_end = range_offset + range_size;
-    uint64_t exclude_end = exclude_offset + exclude_size;
+	const uint8_t	*p;
+	size_t			written;
 
-    if (range_offset >= (uint64_t)file_size || range_size == 0)
-        return;
-    if (range_end > (uint64_t)file_size)
-        range_end = (uint64_t)file_size;
-
-    if (exclude_size == 0 || exclude_end <= range_offset || exclude_offset >= range_end)
-    {
-        xor_encrypt_segment_like_stub(file_bytes, file_size, range_offset, range_end - range_offset, xor_key);
-        return;
-    }
-
-    if (exclude_offset > range_offset)
-        xor_encrypt_segment_like_stub(file_bytes, file_size, range_offset, exclude_offset - range_offset, xor_key);
-    if (exclude_end < range_end)
-        xor_encrypt_segment_like_stub(file_bytes, file_size, exclude_end, range_end - exclude_end, xor_key);
+	p = (const uint8_t *)buf;
+	written = 0;
+	while (written < size)
+	{
+		ssize_t n = write(fd, p + written, size - written);
+		if (n <= 0)
+			return (-1);
+		written += (size_t)n;
+	}
+	return (0);
 }
 
-int main(int argc, char **argv)
-{    unsigned char decode_stub_shellcode[] = {
-  0x49, 0x89, 0xe1, 0x55, 0x48, 0x89, 0xe5, 0x50, 0x53, 0x51, 0x52, 0x56,
-  0x57, 0x41, 0x50, 0x41, 0x51, 0x41, 0x52, 0x41, 0x53, 0x41, 0x54, 0x41,
-  0x55, 0x41, 0x56, 0x41, 0x57, 0x4c, 0x8d, 0x35, 0x1c, 0x02, 0x00, 0x00,
-  0x41, 0x8b, 0x06, 0x3d, 0x45, 0x44, 0x4f, 0x43, 0x0f, 0x85, 0xd9, 0x01,
-  0x00, 0x00, 0x4d, 0x8b, 0x7e, 0x18, 0x4c, 0x89, 0xce, 0x48, 0x83, 0xc6,
-  0x08, 0x48, 0x8b, 0x06, 0x48, 0x83, 0xc6, 0x08, 0x48, 0x85, 0xc0, 0x75,
-  0xf4, 0x48, 0x8b, 0x06, 0x48, 0x83, 0xc6, 0x08, 0x48, 0x85, 0xc0, 0x75,
-  0xf4, 0x4d, 0x31, 0xe4, 0x4d, 0x31, 0xd2, 0xbb, 0x00, 0x10, 0x00, 0x00,
-  0x48, 0x8b, 0x06, 0x48, 0x8b, 0x56, 0x08, 0x48, 0x85, 0xc0, 0x74, 0x21,
-  0x48, 0x83, 0xf8, 0x03, 0x75, 0x03, 0x49, 0x89, 0xd4, 0x48, 0x83, 0xf8,
-  0x05, 0x75, 0x03, 0x49, 0x89, 0xd2, 0x48, 0x83, 0xf8, 0x06, 0x75, 0x03,
-  0x48, 0x89, 0xd3, 0x48, 0x83, 0xc6, 0x10, 0xeb, 0xd3, 0x4d, 0x85, 0xe4,
-  0x0f, 0x84, 0x75, 0x01, 0x00, 0x00, 0x4d, 0x85, 0xd2, 0x0f, 0x84, 0x6c,
-  0x01, 0x00, 0x00, 0x4d, 0x89, 0xe5, 0x4c, 0x89, 0xd1, 0x4d, 0x31, 0xc0,
-  0x48, 0x85, 0xc9, 0x74, 0x1e, 0x41, 0x8b, 0x45, 0x00, 0x83, 0xf8, 0x06,
-  0x75, 0x0c, 0x49, 0x8b, 0x45, 0x10, 0x4d, 0x89, 0xe0, 0x49, 0x29, 0xc0,
-  0xeb, 0x09, 0x49, 0x83, 0xc5, 0x38, 0x48, 0xff, 0xc9, 0xeb, 0xdd, 0x4d,
-  0x89, 0xe5, 0x4d, 0x85, 0xd2, 0x0f, 0x84, 0x06, 0x01, 0x00, 0x00, 0x41,
-  0x8b, 0x45, 0x00, 0x83, 0xf8, 0x01, 0x0f, 0x85, 0xed, 0x00, 0x00, 0x00,
-  0x49, 0x8b, 0x45, 0x08, 0x48, 0x85, 0xc0, 0x0f, 0x84, 0xe0, 0x00, 0x00,
-  0x00, 0x41, 0x8b, 0x45, 0x04, 0xa9, 0x02, 0x00, 0x00, 0x00, 0x0f, 0x85,
-  0xd1, 0x00, 0x00, 0x00, 0x4d, 0x8b, 0x4d, 0x10, 0x4d, 0x01, 0xc1, 0x4d,
-  0x8b, 0x65, 0x20, 0x4d, 0x85, 0xe4, 0x0f, 0x84, 0xbd, 0x00, 0x00, 0x00,
-  0x49, 0x8b, 0x55, 0x30, 0x48, 0x85, 0xd2, 0x75, 0x03, 0x48, 0x89, 0xda,
-  0x48, 0x39, 0xda, 0x73, 0x03, 0x48, 0x89, 0xda, 0x48, 0x89, 0xd0, 0x48,
-  0xff, 0xc8, 0x48, 0xf7, 0xd0, 0x4c, 0x89, 0xcf, 0x48, 0x21, 0xc7, 0x4b,
-  0x8d, 0x34, 0x21, 0x48, 0x89, 0xd1, 0x48, 0xff, 0xc9, 0x48, 0x01, 0xce,
-  0x48, 0x21, 0xc6, 0x48, 0x29, 0xfe, 0xb8, 0x0a, 0x00, 0x00, 0x00, 0xba,
-  0x07, 0x00, 0x00, 0x00, 0x0f, 0x05, 0x4c, 0x8d, 0x1d, 0xa3, 0xfe, 0xff,
-  0xff, 0x48, 0x8d, 0x15, 0x04, 0x01, 0x00, 0x00, 0x4c, 0x89, 0xcf, 0x4c,
-  0x89, 0xe1, 0x48, 0x83, 0xf9, 0x08, 0x72, 0x30, 0x4c, 0x39, 0xdf, 0x72,
-  0x18, 0x48, 0x39, 0xd7, 0x73, 0x13, 0x48, 0x89, 0xd0, 0x48, 0x29, 0xf8,
-  0x48, 0x39, 0xc8, 0x73, 0x4c, 0x48, 0x01, 0xc7, 0x48, 0x29, 0xc1, 0xeb,
-  0xdd, 0x48, 0x8b, 0x07, 0x4c, 0x31, 0xf8, 0x48, 0x89, 0x07, 0x48, 0x83,
-  0xc7, 0x08, 0x48, 0x83, 0xe9, 0x08, 0xeb, 0xca, 0x48, 0x85, 0xc9, 0x74,
-  0x2c, 0x4c, 0x39, 0xdf, 0x72, 0x18, 0x48, 0x39, 0xd7, 0x73, 0x13, 0x48,
-  0x89, 0xd0, 0x48, 0x29, 0xf8, 0x48, 0x39, 0xc8, 0x73, 0x17, 0x48, 0x01,
-  0xc7, 0x48, 0x29, 0xc1, 0xeb, 0xe3, 0x8a, 0x07, 0x44, 0x30, 0xf8, 0x88,
-  0x07, 0x48, 0xff, 0xc7, 0x48, 0xff, 0xc9, 0x75, 0xd4, 0x49, 0x83, 0xc5,
-  0x38, 0x49, 0xff, 0xca, 0xe9, 0xf1, 0xfe, 0xff, 0xff, 0x4c, 0x89, 0xf7,
-  0x48, 0x89, 0xd8, 0x48, 0xff, 0xc8, 0x48, 0xf7, 0xd0, 0x48, 0x21, 0xc7,
-  0x48, 0x89, 0xde, 0xb8, 0x0a, 0x00, 0x00, 0x00, 0xba, 0x07, 0x00, 0x00,
-  0x00, 0x0f, 0x05, 0x48, 0x8d, 0x3d, 0x3e, 0x00, 0x00, 0x00, 0xb9, 0x20,
-  0x00, 0x00, 0x00, 0x31, 0xc0, 0xf3, 0xaa, 0x41, 0x5f, 0x41, 0x5e, 0x41,
-  0x5d, 0x41, 0x5c, 0x41, 0x5b, 0x41, 0x5a, 0x41, 0x59, 0x41, 0x58, 0x5f,
-  0x5e, 0x5a, 0x59, 0x5b, 0x58, 0x5d, 0x48, 0x8d, 0x05, 0x17, 0x00, 0x00,
-  0x00, 0x48, 0x03, 0x05, 0x30, 0x00, 0x00, 0x00, 0xff, 0xe0, 0x90, 0x90,
-  0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
-  0x45, 0x44, 0x4f, 0x43, 0x45, 0x44, 0x50, 0x57, 0x22, 0x22, 0x22, 0x22,
-  0x11, 0x11, 0x11, 0x11, 0x44, 0x44, 0x44, 0x44, 0x33, 0x33, 0x33, 0x33,
-  0x66, 0x66, 0x66, 0x66, 0x55, 0x55, 0x55, 0x55, 0x88, 0x88, 0x88, 0x88,
-  0x77, 0x77, 0x77, 0x77
-    };
+static int validate_elf64_x86_64(const Elf64_Ehdr *ehdr, size_t file_size)
+{
+	if (ehdr == NULL)
+		return (-1);
+	if (file_size < sizeof(Elf64_Ehdr))
+		return (-1);
+	if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0)
+		return (-1);
+	if (ehdr->e_ident[EI_CLASS] != ELFCLASS64)
+		return (-1);
+	if (ehdr->e_machine != EM_X86_64)
+		return (-1);
+	return (0);
+}
 
-    const uint64_t placeholder_packed_magic = 0x57504445434F4445ULL;
-    const uint64_t expected_packed_magic = 0x00000000434F4445ULL;
-    const uint64_t placeholder_target_phdr_index = 0x1111111122222222ULL;
-    const uint64_t placeholder_reserved = 0x3333333344444444ULL;
-    const uint64_t placeholder_xor_key = 0x5555555566666666ULL;
-    const uint64_t placeholder_original_entry_delta = 0x7777777788888888ULL;
+static int should_skip_section_type(uint32_t sh_type)
+{
+	/*
+	 * Keep metadata sections readable so tools (objdump/readelf) can parse
+	 * names, symbols, notes, and versioning without errors.
+	 */
+	if (sh_type == SHT_STRTAB)
+		return (1);
+	if (sh_type == SHT_SYMTAB || sh_type == SHT_DYNSYM)
+		return (1);
+	if (sh_type == SHT_NOTE)
+		return (1);
+	if (sh_type == SHT_REL || sh_type == SHT_RELA)
+		return (1);
+#ifdef SHT_GNU_verneed
+	if (sh_type == SHT_GNU_verneed)
+		return (1);
+#endif
+#ifdef SHT_GNU_versym
+	if (sh_type == SHT_GNU_versym)
+		return (1);
+#endif
+	return (0);
+}
 
-    if (argc < 3)
-    {
-        fprintf(stderr, "usage: %s <xor_key> <elf_path>\n", argv[0]);
-        return 1;
-    }
+int main(int argc, char *argv[])
+{
+	int			in_fd;
+	int			out_fd;
+	struct stat	st;
+	off_t		file_size_off;
+	size_t		file_size;
+	void		*in_map;
+	uint8_t		*out_buf;
+	uint8_t		*key;
+	size_t		key_len;
+	Elf64_Ehdr	*ehdr;
+	uint64_t	phdr_off;
+	uint64_t	phdr_size;
+	uint64_t	shdr_off;
+	uint64_t	shdr_size;
+	t_range		*skip_ranges;
+	size_t		skip_count;
+	size_t		skip_cap;
+	Elf64_Shdr	*shdrs;
 
-    uint64_t xor_key = strtoull(argv[1], NULL, 0);
-    const char *target_path = argv[2];
+	if (argc != 3)
+		return (1);
+	if (parse_hex_key(argv[1], &key, &key_len) != 0)
+		return (1);
+	in_fd = open(argv[2], O_RDONLY);
+	if (in_fd < 0)
+	{
+		free(key);
+		return (1);
+	}
+	if (fstat(in_fd, &st) != 0)
+	{
+		free(key);
+		close(in_fd);
+		return (1);
+	}
+	file_size_off = lseek(in_fd, 0, SEEK_END);
+	if (file_size_off <= 0)
+	{
+		free(key);
+		close(in_fd);
+		return (1);
+	}
+	file_size = (size_t)file_size_off;
+	in_map = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, in_fd, 0);
+	if (in_map == MAP_FAILED)
+	{
+		free(key);
+		close(in_fd);
+		return (1);
+	}
+	ehdr = (Elf64_Ehdr *)in_map;
+	if (validate_elf64_x86_64(ehdr, file_size) != 0)
+	{
+		free(key);
+		munmap(in_map, file_size);
+		close(in_fd);
+		return (1);
+	}
+	phdr_off = ehdr->e_phoff;
+	phdr_size = (uint64_t)ehdr->e_phentsize * (uint64_t)ehdr->e_phnum;
+	if (!check_range(phdr_off, phdr_size, file_size))
+	{
+		free(key);
+		munmap(in_map, file_size);
+		close(in_fd);
+		return (1);
+	}
+	out_buf = (uint8_t *)malloc(file_size);
+	if (out_buf == NULL)
+	{
+		free(key);
+		munmap(in_map, file_size);
+		close(in_fd);
+		return (1);
+	}
+	memcpy(out_buf, in_map, file_size);
 
-    int input_fd = open(target_path, O_RDONLY);
-    if (input_fd < 0)
-        return 1;
+	/*
+	 * Skip encryption ranges:
+	 * - ELF header: [0, sizeof(Elf64_Ehdr))
+	 * - Program header table (PHDR): [e_phoff, e_phoff + e_phentsize*e_phnum)
+	 * - Section header table (SHDR): [e_shoff, e_shoff + e_shentsize*e_shnum)
+	 * - Section header string table (shstrtab) contents: [sh_offset, sh_offset+sh_size)
+	 *
+	 * Keeping SHDR intact makes tools like objdump/readelf able to parse the file format.
+	 */
+	skip_cap = (size_t)ehdr->e_shnum + 8;
+	skip_ranges = (t_range *)malloc(sizeof(t_range) * skip_cap);
+	if (skip_ranges == NULL)
+	{
+		free(out_buf);
+		free(key);
+		munmap(in_map, file_size);
+		close(in_fd);
+		return (1);
+	}
+	skip_count = 0;
+	skip_ranges[skip_count++] = (t_range){0, sizeof(Elf64_Ehdr)};
+	skip_ranges[skip_count++] = (t_range){phdr_off, phdr_off + phdr_size};
 
-    off_t file_size = lseek(input_fd, 0, SEEK_END);
-    if (file_size <= 0)
-    {
-        close(input_fd);
-        return 1;
-    }
-    lseek(input_fd, 0, SEEK_SET);
+	shdr_off = ehdr->e_shoff;
+	shdr_size = (uint64_t)ehdr->e_shentsize * (uint64_t)ehdr->e_shnum;
+	if (check_range(shdr_off, shdr_size, file_size))
+	{
+		skip_ranges[skip_count++] = (t_range){shdr_off, shdr_off + shdr_size};
+		shdrs = (Elf64_Shdr *)move_address(out_buf, shdr_off);
+		if (ehdr->e_shstrndx != SHN_UNDEF && ehdr->e_shstrndx < ehdr->e_shnum)
+		{
+			Elf64_Shdr *shstr = &shdrs[ehdr->e_shstrndx];
+			if (check_range(shstr->sh_offset, shstr->sh_size, file_size))
+				skip_ranges[skip_count++] = (t_range){shstr->sh_offset,
+					shstr->sh_offset + shstr->sh_size};
+		}
+		/*
+		 * Also skip common metadata section contents (string tables, notes,
+		 * symbol/versioning tables) so objdump -D doesn't error out.
+		 */
+		for (uint16_t i = 0; i < ehdr->e_shnum && skip_count < skip_cap; i++)
+		{
+			Elf64_Shdr *s = &shdrs[i];
+			if (!should_skip_section_type(s->sh_type))
+				continue;
+			if (s->sh_size == 0)
+				continue;
+			if (!check_range(s->sh_offset, s->sh_size, file_size))
+				continue;
+			skip_ranges[skip_count++] = (t_range){s->sh_offset, s->sh_offset + s->sh_size};
+		}
+	}
+	xor_encrypt_excluding_ranges(out_buf, (uint64_t)file_size,
+		skip_ranges, skip_count, key, key_len);
+	free(skip_ranges);
 
-    unsigned char *file_bytes = mmap(NULL, (size_t)file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, input_fd, 0);
-    close(input_fd);
-    if (file_bytes == MAP_FAILED)
-        return 1;
-
-    Elf64_Ehdr *elf_header = (Elf64_Ehdr *)file_bytes;
-    if (memcmp(elf_header->e_ident, ELFMAG, SELFMAG) != 0)
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-    if (elf_header->e_type != ET_EXEC && elf_header->e_type != ET_DYN)
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-
-    if (elf_header->e_phoff + (uint64_t)elf_header->e_phnum * sizeof(Elf64_Phdr) > (uint64_t)file_size)
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-
-    Elf64_Phdr *program_headers = (Elf64_Phdr *)add_offset(file_bytes, elf_header->e_phoff);
-
-    uint16_t executable_segment_index = 0;
-    Elf64_Phdr *executable_segment = find_executable_load_segment(program_headers, elf_header->e_phnum, &executable_segment_index);
-    Elf64_Phdr *first_load_segment = find_first_load_segment(program_headers, elf_header->e_phnum);
-    if (executable_segment == NULL || first_load_segment == NULL)
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-
-    uint64_t stub_file_offset = align_up_16(executable_segment->p_offset + executable_segment->p_filesz);
-    uint64_t next_load_offset = find_next_load_offset(program_headers, elf_header->e_phnum, executable_segment->p_offset);
-    if (next_load_offset == UINT64_MAX)
-        next_load_offset = (uint64_t)file_size;
-
-    if (stub_file_offset + sizeof(decode_stub_shellcode) > next_load_offset)
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-
-    uint64_t stub_virtual_address = executable_segment->p_vaddr + (stub_file_offset - executable_segment->p_offset);
-
-    size_t anchor_offset_in_stub = find_u64_placeholder(decode_stub_shellcode, sizeof(decode_stub_shellcode), placeholder_packed_magic);
-    if (anchor_offset_in_stub == SIZE_MAX)
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-
-    uint64_t original_entry = elf_header->e_entry;
-    uint64_t anchor_virtual_address = stub_virtual_address + (uint64_t)anchor_offset_in_stub;
-    int64_t original_entry_delta = (int64_t)original_entry - (int64_t)anchor_virtual_address;
-
-    if (!patch_u64_placeholder(decode_stub_shellcode, sizeof(decode_stub_shellcode), placeholder_packed_magic, expected_packed_magic) ||
-        !patch_u64_placeholder(decode_stub_shellcode, sizeof(decode_stub_shellcode), placeholder_target_phdr_index, 0) ||
-        !patch_u64_placeholder(decode_stub_shellcode, sizeof(decode_stub_shellcode), placeholder_reserved, 0) ||
-        !patch_u64_placeholder(decode_stub_shellcode, sizeof(decode_stub_shellcode), placeholder_xor_key, xor_key) ||
-        !patch_u64_placeholder(decode_stub_shellcode, sizeof(decode_stub_shellcode), placeholder_original_entry_delta, (uint64_t)original_entry_delta))
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-
-    memcpy(file_bytes + stub_file_offset, decode_stub_shellcode, sizeof(decode_stub_shellcode));
-
-    elf_header->e_entry = stub_virtual_address;
-
-    uint64_t new_executable_file_size = stub_file_offset + sizeof(decode_stub_shellcode) - executable_segment->p_offset;
-    executable_segment->p_filesz = new_executable_file_size;
-    executable_segment->p_memsz = new_executable_file_size;
-
-    uint64_t stub_exclude_offset = stub_file_offset;
-    uint64_t stub_exclude_size = (uint64_t)sizeof(decode_stub_shellcode);
-
-    uint16_t header_index = 0;
-    while (header_index < elf_header->e_phnum)
-    {
-        Elf64_Phdr *current_header = &program_headers[header_index];
-        if (current_header->p_type == PT_LOAD &&
-            current_header->p_offset != 0 &&
-            (current_header->p_flags & PF_W) == 0 &&
-            current_header->p_filesz != 0)
-        {
-            xor_encrypt_range_excluding(file_bytes,
-                                        (size_t)file_size,
-                                        current_header->p_offset,
-                                        current_header->p_filesz,
-                                        stub_exclude_offset,
-                                        stub_exclude_size,
-                                        xor_key);
-        }
-        header_index++;
-    }
-
-    int output_fd = open("woody", O_WRONLY | O_CREAT | O_TRUNC, 0755);
-    if (output_fd < 0)
-    {
-        munmap(file_bytes, (size_t)file_size);
-        return 1;
-    }
-
-    ssize_t written_size = write(output_fd, file_bytes, (size_t)file_size);
-    close(output_fd);
-    munmap(file_bytes, (size_t)file_size);
-
-    if (written_size != (ssize_t)file_size)
-        return 1;
-
-    return 0;
+	out_fd = open("woody", O_WRONLY | O_CREAT | O_TRUNC, (mode_t)(st.st_mode & 0777));
+	if (out_fd < 0)
+	{
+		free(out_buf);
+		free(key);
+		munmap(in_map, file_size);
+		close(in_fd);
+		return (1);
+	}
+	if (write_all(out_fd, out_buf, file_size) != 0)
+	{
+		close(out_fd);
+		free(out_buf);
+		free(key);
+		munmap(in_map, file_size);
+		close(in_fd);
+		return (1);
+	}
+	close(out_fd);
+	free(out_buf);
+	free(key);
+	munmap(in_map, file_size);
+	close(in_fd);
+	return (0);
 }

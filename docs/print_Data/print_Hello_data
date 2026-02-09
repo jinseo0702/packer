@@ -1,0 +1,200 @@
+
+
+typedef struct { 
+               unsigned char e_ident[EI_NIDENT]; 
+               uint16_t      e_type; -> ET_DYN : A shared object. 
+               uint16_t      e_machine; -> EM_X86_64 AMD x86-64 
+               uint32_t      e_version; -> EV_CURRENT : Current version 
+               Elf64_Addr     e_entry; -> 0x1060
+               Elf64_Off      e_phoff; -> 0x40
+               Elf64_Off      e_shoff; -> 0x36A0
+               uint32_t      e_flags; -> (nil)
+               uint16_t      e_ehsize; -> 0x40
+               uint16_t      e_phentsize; -> 0x38
+               uint16_t      e_phnum; -> 0xD
+               uint16_t      e_shentsize; -> 0x40
+               uint16_t      e_shnum; -> 0x1F
+               uint16_t      e_shstrndx; -> 0x1E
+} Elf64_Ehdr; 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x6
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x40
+    Elf64_Addr p_vaddr; -> 0x40
+    Elf64_Addr p_paddr; -> 0x40
+    uint64_t   p_filesz; -> 0x2D8
+    uint64_t   p_memsz; -> 0x2D8
+    uint64_t   p_align; -> 0x8
+} Elf64_Phdr; 
+
+Index is 0x0 
+p_type is PT_PHDR 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x3
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x318
+    Elf64_Addr p_vaddr; -> 0x318
+    Elf64_Addr p_paddr; -> 0x318
+    uint64_t   p_filesz; -> 0x1C
+    uint64_t   p_memsz; -> 0x1C
+    uint64_t   p_align; -> 0x1
+} Elf64_Phdr; 
+
+Index is 0x1 
+p_type is PT_INTERP 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x1
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x0
+    Elf64_Addr p_vaddr; -> 0x0
+    Elf64_Addr p_paddr; -> 0x0
+    uint64_t   p_filesz; -> 0x628
+    uint64_t   p_memsz; -> 0x628
+    uint64_t   p_align; -> 0x1000
+} Elf64_Phdr; 
+
+Index is 0x2 
+p_type is PT_LOAD 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x1
+    uint32_t   p_flags; -> 0x5
+    Elf64_Off  p_offset; -> 0x1000
+    Elf64_Addr p_vaddr; -> 0x1000
+    Elf64_Addr p_paddr; -> 0x1000
+    uint64_t   p_filesz; -> 0x181
+    uint64_t   p_memsz; -> 0x181
+    uint64_t   p_align; -> 0x1000
+} Elf64_Phdr; 
+
+Index is 0x3 
+p_type is PT_LOAD 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x1
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x2000
+    Elf64_Addr p_vaddr; -> 0x2000
+    Elf64_Addr p_paddr; -> 0x2000
+    uint64_t   p_filesz; -> 0xF4
+    uint64_t   p_memsz; -> 0xF4
+    uint64_t   p_align; -> 0x1000
+} Elf64_Phdr; 
+
+Index is 0x4 
+p_type is PT_LOAD 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x1
+    uint32_t   p_flags; -> 0x6
+    Elf64_Off  p_offset; -> 0x2DB8
+    Elf64_Addr p_vaddr; -> 0x3DB8
+    Elf64_Addr p_paddr; -> 0x3DB8
+    uint64_t   p_filesz; -> 0x258
+    uint64_t   p_memsz; -> 0x260
+    uint64_t   p_align; -> 0x1000
+} Elf64_Phdr; 
+
+Index is 0x5 
+p_type is PT_LOAD 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x2
+    uint32_t   p_flags; -> 0x6
+    Elf64_Off  p_offset; -> 0x2DC8
+    Elf64_Addr p_vaddr; -> 0x3DC8
+    Elf64_Addr p_paddr; -> 0x3DC8
+    uint64_t   p_filesz; -> 0x1F0
+    uint64_t   p_memsz; -> 0x1F0
+    uint64_t   p_align; -> 0x8
+} Elf64_Phdr; 
+
+Index is 0x6 
+p_type is PT_DYNAMIC 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x4
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x338
+    Elf64_Addr p_vaddr; -> 0x338
+    Elf64_Addr p_paddr; -> 0x338
+    uint64_t   p_filesz; -> 0x30
+    uint64_t   p_memsz; -> 0x30
+    uint64_t   p_align; -> 0x8
+} Elf64_Phdr; 
+
+Index is 0x7 
+p_type is PT_NOTE 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x4
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x368
+    Elf64_Addr p_vaddr; -> 0x368
+    Elf64_Addr p_paddr; -> 0x368
+    uint64_t   p_filesz; -> 0x44
+    uint64_t   p_memsz; -> 0x44
+    uint64_t   p_align; -> 0x4
+} Elf64_Phdr; 
+
+Index is 0x8 
+p_type is PT_NOTE 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x6474E553
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x338
+    Elf64_Addr p_vaddr; -> 0x338
+    Elf64_Addr p_paddr; -> 0x338
+    uint64_t   p_filesz; -> 0x30
+    uint64_t   p_memsz; -> 0x30
+    uint64_t   p_align; -> 0x8
+} Elf64_Phdr; 
+
+Index is 0x9 
+p_type is Over PT_NUM 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x6474E550
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x2014
+    Elf64_Addr p_vaddr; -> 0x2014
+    Elf64_Addr p_paddr; -> 0x2014
+    uint64_t   p_filesz; -> 0x34
+    uint64_t   p_memsz; -> 0x34
+    uint64_t   p_align; -> 0x4
+} Elf64_Phdr; 
+
+Index is 0xA 
+p_type is Over PT_NUM 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x6474E551
+    uint32_t   p_flags; -> 0x6
+    Elf64_Off  p_offset; -> 0x0
+    Elf64_Addr p_vaddr; -> 0x0
+    Elf64_Addr p_paddr; -> 0x0
+    uint64_t   p_filesz; -> 0x0
+    uint64_t   p_memsz; -> 0x0
+    uint64_t   p_align; -> 0x10
+} Elf64_Phdr; 
+
+Index is 0xB 
+p_type is Over PT_NUM 
+ 
+typedef struct { 
+    uint32_t   p_type; -> 0x6474E552
+    uint32_t   p_flags; -> 0x4
+    Elf64_Off  p_offset; -> 0x2DB8
+    Elf64_Addr p_vaddr; -> 0x3DB8
+    Elf64_Addr p_paddr; -> 0x3DB8
+    uint64_t   p_filesz; -> 0x248
+    uint64_t   p_memsz; -> 0x248
+    uint64_t   p_align; -> 0x1
+} Elf64_Phdr; 
+
+Index is 0xC 
+p_type is Over PT_NUM 

@@ -1,0 +1,95 @@
+생각을 정리해본다.
+
+내가 만들어야 하는 것.
+woody_woodpacker 이름의 packer
+출력물 woody
+
+woody_woodpacker 가 할 일
+- 암호화
+- 파일의 유효성 검사
+- 32/64 비트 정규화
+- 랜덤 키 생성
+- 파라미터로 key 받기
+- woody 파일 생성
+- assembly 의 매직넘버 찾아서 변경
+
+assembly 코드 가 할일
+- 복호화 진행
+	- 복호화 할 때 필요한 것들 (물리 elf 건드리지 않음)
+		1. _start 와 상대적 거리
+		2. 복호화 키
+		3. base 와 복호화 함수의 offset
+		4. base의 크기 , 메타데이터 크기
+- woody 출력
+....WOODY....
+assembly 가 필요한 값들
+
+생각 정리
+- elf 파일을 살펴보니 패턴을 찾았다. 
+일반적인 경우는 PT_LOAD 가 독립적으로 존재하고, 그안에서 여러개의 영역으로 쪼개진다.
+또한 OS_Loader 가 프로세스를 올릴때 꼭 필요한 값인 p_offset:  0x0 이고 p_flags: 0x4 Read 인 PT_LOAD 는 암호화 하면안된다.
+woody_woodpacker 를 해결 하기위해서는 나는 meta data 를 사용할 것이다.
+매직넘버는 사용 하지 않고 그만큼의 공간이 있다고 가정한다.
+meta data 가 가지고 data 의 종류
+복호화 시작해야하는 offset
+복화 해야하는 크기
+flag 의 값
+
+어셈블리 코드 동작 
+추상화 매크로 사용
+meta data 기준으로 복호화 진행
+flag 값에 따라서 mprotect(2) 를 진행
+복호화 진행
+반복
+끝났다면 _start로 이동
+
+가상주소 - 현재주소 = 
+call / pop 에서 call function 은 몇 바이트 일까
+1fb:   e8 40 00 00 00          call   0x240
+5바이트인걸 알 수 있다. 그렇다면 base 를 call/pop 전략에서 -5 byte 를 call 한 함수의 주소 기준으로 구할 수 있다.
+nasm -f bin -o shellcode.bin testPackerToDecoding.s
+ndisasm -b 64 shellcode.bin
+objdump -D -b binary -m i386:x86-64 -M intel shellcode.bin
+
+---
+stub 복호화 코드 만들기
+
+
+```
+
+_stub_end:
+	POP_ALL_REGISTER
+	FIND_DATA_INDEX CTX_DI, 123, 2, 0
+	FIND_OFFSET CTX_AX, [CTX_DI]
+	jmp CTX_AX
+
+
+```
+
+마지막에 레지스터를 건드리면 안되는데 레지스터를 건드려서 jmp 를 하면 문제가 생길 수 있다.
+ret 은 특수 레지스터를 건들여서 문제를 해결 한다. 이걸 활용해보자 
+_start 문서를 확인 해보니까 건드리는 레지스터는 rbp, rsp, rdx 이다. 그럼 저 로직을 사용해도 된다.
+근데 더 최적화를 해보자면
+```
+_stub:
+	INIT_RESI CTX_CX, CTX_CX
+	FIND_DATA_INDEX CTX_CX, 123, 2, 8
+	INIT_RESI CTX_AX, CTX_AX
+	FIND_OFFSET CTX_AX, [CTX_CX]
+	push CTX_AX
+	PUSH_ALL_REGISTER
+	INIT_RESI CTX_AX, CTX_AX
+	FIND_DATA_INDEX CTX_AX, 123, 5, 8 ; get meta data num
+	mov %2, (%1 * %3)
+
+
+_stub_end:
+	POP_ALL_REGISTER
+	ret
+
+```
+
+ret 은 rsp 상단에 있는 주소로 점프를 한다.
+_start 는 rax, rcx 레지스터의 보존을 원하지 않는다. 그래서 미리 값을 계산해서
+stack 의 맨처음에 넣어두고, 맨 마지막에 ret 을 헤버린다.
+

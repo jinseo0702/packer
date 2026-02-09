@@ -1,6 +1,7 @@
-section .text
-    global _TestPackerToDecoding
-
+; section .text
+;     global _TestPackerToDecoding
+[BITS 64]
+[ORG 0x0]
 %define SYS_MPROTECT 10
 %define PROT_RWX     7
 
@@ -251,6 +252,7 @@ stub_begin:
     mov rdx, PROT_RWX
     syscall
 
+	call packed_info
     lea rdi, [rel packed_info]
     mov rcx, packed_wipe_end - packed_info
     xor eax, eax
@@ -287,7 +289,7 @@ packed_target_phdr_index:  dq 0x1111111122222222
 packed_reserved:           dq 0x3333333344444444
 packed_xor_key:            dq 0x5555555566666666
 packed_wipe_end:
-original_entry_delta:      dq 0x7777777788888888
+original_entry_delta:      dq 0xABCABCABCABCABCAB
 packed_info_end:
 
 stub_end:
