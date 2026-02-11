@@ -10,8 +10,8 @@ bits 64
 	%define CTX_DI      rdi
 	%define CTX_SP      rsp
 	%define CTX_BP      rbp
-	%define PTR_SIZE    8
-	%define CODE_SIZE   123
+	%define PTR_SIZE    0x8
+	%define CODE_SIZE   0x1F0
 	%define ORI_BASE    r10
 	%define META_ADD    r8
 %else
@@ -24,7 +24,8 @@ bits 32
 	%define CTX_DI      edi
 	%define CTX_SP      esp
 	%define CTX_BP      ebp
-	%define CODE_SIZE   123
+	%define PTR_SIZE    0x4
+	%define CODE_SIZE   0x160
 	%define ORI_BASE    esi
 	%define META_ADD    edi
 %endif
@@ -179,10 +180,10 @@ bits 32
 		INIT_RESI CTX_BX
 		INIT_RESI CTX_CX
 		INIT_RESI CTX_DX
-		mov CTX_DI, %1
-		mov CTX_SI, %2
+		mov CTX_BX, %1
+		mov CTX_CX, %2
 		mov CTX_DX, %3
-		mov CTX_AX, 4
+		mov CTX_AX, 0x4
 		syscall
 		CHECK_ERROR
 	%endmacro
@@ -190,7 +191,7 @@ bits 32
 
 ; exit syscall
 %ifdef ARCH_64
-	%macro CHECK_ERROR
+	%macro CHECK_ERROR 0
 	bits 64
 		test CTX_AX, CTX_AX
 		js %%error
@@ -199,12 +200,12 @@ bits 32
 		INIT_RESI CTX_DI
 		neg CTX_AX
 		mov CTX_DI, CTX_AX
-		mov CTX_AX, 60
+		mov CTX_AX, 0x3C
 		syscall
 	%%done:
 	%endmacro
 %else
-	%macro CHECK_ERROR
+	%macro CHECK_ERROR 0
 	bits 32
 		test CTX_AX, CTX_AX
 		js %%error
@@ -213,7 +214,7 @@ bits 32
 		INIT_RESI CTX_BX
 		neg CTX_AX
 		mov CTX_BX, CTX_AX
-		mov CTX_AX, 1
+		mov CTX_AX, 0x1
 		syscall
 	%%done:
 	%endmacro
@@ -234,9 +235,11 @@ bits 32
 ; %1 record origin meta_data address 
 ; %2 record meta_data * index
 %macro GET_META_DATA 2
+	mov CTX_AX, %2
+	imul CTX_AX, CTX_AX, 0x18
 	INIT_RESI %1
 	FIND_DATA_INDEX %1, 6, 8
-	add %1, (24 * %2)
+	add %1, CTX_AX
 %endmacro
 
 ; get value and insert to destination
@@ -248,18 +251,18 @@ bits 32
 
 ; %1 decoding start address
 ; %2 endsize
-%macro DECODING_QWORD 2
+%macro DECODING_DATA 2
     INIT_RESI CTX_CX
-    GET_DATA_VALUE CTX_BX, CTX_AX, 4
+    GET_DATA_VALUE CTX_BX, CTX_AX, 0x4 ; CTX_BX = key
 	%%_loop_qword:
-	    mov CTX_AX, %2
+	    mov CTX_AX, %2 ; CTX_AX = p_memsz
 	    sub CTX_AX, CTX_CX
-	    cmp CTX_AX, 8
+	    cmp CTX_AX, PTR_SIZE
 	    jl %%_remaining
 	    mov CTX_AX, [%1 + CTX_CX]
 	    xor CTX_AX, CTX_BX
 	    mov [%1 + CTX_CX], CTX_AX
-	    add CTX_CX, 8
+	    add CTX_CX, PTR_SIZE
 	    jmp %%_loop_qword
 	%%_remaining:
 	    cmp CTX_CX, %2
@@ -274,7 +277,7 @@ bits 32
 _stub:
 	INIT_RESI CTX_CX
 	INIT_RESI CTX_AX
-	FIND_DATA_INDEX CTX_CX, 2, 8
+	FIND_DATA_INDEX CTX_CX, 0x2, 0x8
 	FIND_OFFSET CTX_AX, [CTX_CX]
 	push CTX_AX
 	PUSH_ALL_REGISTER
@@ -282,34 +285,35 @@ _stub:
 	FIND_OFFSET ORI_BASE, 0
 
 _loop:
-	GET_DATA_VALUE CTX_AX, CTX_DI, 5
+	GET_DATA_VALUE CTX_AX, CTX_DI, 0x5
 	cmp CTX_BP, CTX_AX
 	je _stub_end
 
 _decryption:
-	GET_META_DATA META_ADD, CTX_BP; META_ADD = meta_data [META_ADD] == offset
+	GET_META_DATA META_ADD, CTX_BP ; META_ADD = meta_data [META_ADD] == offset
 	INIT_INSERT_VALUE CTX_AX, META_ADD ; CTX_AX = meta_data [META_ADD] == offset
 	add CTX_AX, ORI_BASE; [META_ADD] is decoding start address
-	INIT_INSERT_VALUE CTX_DX, (META_ADD + 8) ; p_memsz
-	INIT_INSERT_VALUE CTX_SI, (META_ADD + 16) ; p_flags
-	test CTX_SI, 2
+	INIT_INSERT_VALUE CTX_DX, (META_ADD + 0x8) ; p_memsz
+	INIT_INSERT_VALUE CTX_SI, (META_ADD + 0x10) ; p_flags
+	test CTX_SI, 0x2 ;  write
 	jnz _skip_mprotec
-	USE_MPROTEC CTX_AX, CTX_DX, 2
+	USE_MPROTEC CTX_AX, CTX_DX, 0x7
  
  _skip_mprotec:
-	GET_META_DATA META_ADD, CTX_BP; META_ADD = meta_data [META_ADD] == offset
+	GET_META_DATA META_ADD, CTX_BP ; META_ADD = meta_data [META_ADD] == offset
 	INIT_INSERT_VALUE CTX_AX, META_ADD ; CTX_AX = meta_data [META_ADD] == offset
 	add CTX_AX, ORI_BASE; [META_ADD] is decoding start address
-	INIT_INSERT_VALUE CTX_DX, (META_ADD + 8) ; p_memsz
-	INIT_INSERT_VALUE CTX_SI, (META_ADD + 16) ; p_flags
+	INIT_INSERT_VALUE CTX_DX, (META_ADD + 0x8) ; p_memsz
+	INIT_INSERT_VALUE CTX_SI, (META_ADD + 0x10) ; p_flags
 	mov CTX_DI, CTX_AX
-	DECODING_QWORD CTX_DI, CTX_DX
+	push CTX_AX
+	DECODING_DATA CTX_DI, CTX_DX
 	inc CTX_BP
-	test CTX_SI, 2
+	pop CTX_AX
+	test CTX_SI, 0x2
 	jnz _loop
-	USE_MPROTEC CTX_AX, CTX_DX, 2
+	USE_MPROTEC CTX_AX, CTX_DX, CTX_SI
 	jmp _loop
-;;;;; 스티커 메모를 보자 한계다. 2. mprotect 권한 값 오류 여기서 부터
 
 _stub_end:
 	POP_ALL_REGISTER
@@ -322,11 +326,10 @@ align 16
 ; dq(8byte) p_vaddr 
 ; dq(8byte) key
 ; dq(8btye) Meta data num
-/*
-meta data How to
-{
-dq(8byte) p_vaddr = start offset
-dq(8byte) p_memsz = end_offset
-dq(8byte) p_falgs = decision mprotec used
-}
-*/
+
+;meta data How to
+;{
+;dq(8byte) p_vaddr = start offset
+;dq(8byte) p_memsz = size
+;dq(8byte) p_reverse_falgs = decision mprotec used -> this flag is support mprotect prot value origin p_flag value 001 this flag is 100 because port is reverse auth
+;}
