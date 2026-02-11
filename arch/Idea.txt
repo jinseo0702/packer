@@ -93,3 +93,12 @@ ret 은 rsp 상단에 있는 주소로 점프를 한다.
 _start 는 rax, rcx 레지스터의 보존을 원하지 않는다. 그래서 미리 값을 계산해서
 stack 의 맨처음에 넣어두고, 맨 마지막에 ret 을 헤버린다.
 
+2026-02-11
+stub.s  meta data 안의 p_falg 를 그냥 반전 시켜서 줘버리자
+
+```
+➜ xxd -i shellcode_64.bin | tail -n 1
+unsigned int shellcode_64_bin_len = 496; 0x1F0
+➜ xxd -i shellcode_32.bin | tail -n 1
+unsigned int shellcode_32_bin_len = 352; 0x160
+```
