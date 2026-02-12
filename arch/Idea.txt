@@ -102,3 +102,45 @@ unsigned int shellcode_64_bin_len = 496; 0x1F0
 ➜ xxd -i shellcode_32.bin | tail -n 1
 unsigned int shellcode_32_bin_len = 352; 0x160
 ```
+
+key 가 출력이 안됨
+- ft_printf -> printf 로 교체
+
+woody 에서 segment error 발생
+- .dynamic 을 건드려서 문제가 발생. 
+- check_meta 의 fill_arrys 안의 조건에 (phdr->p_flags & (PF_R | PF_X)) == (PF_R | PF_X) 추가
+
+함수가 정상동작 안함
+sample 은 HelloWrold 를 출력해야하지만 아무 것도 안함
+현재 문제를 분석 결과 
+```
+gef➤  p/x $rax
+$10 = 0x1000
+gef➤  p/x $r10 -> ORI_BASE
+$11 = 0x555555555175
+```
+```
+gef➤  vmmap
+[ Legend:  Code | Stack | Heap ]
+Start              End                Offset             Perm Path
+0x0000555555554000 0x0000555555555000 0x0000000000000000 r-- /home/jinseo/jinseo/42_gs/packer/woody
+```
+ori_base 가 0x0000555555554000 이 나와야 하지만 현재 0x1175 의 차이가 발생했다. 즉 ori_base 가 이상하기 때문에 모든 연산이 뒤틀린 것으로 추정 할 수 있다.
+왜 값이 달라진건지 추정 해야한다. 
+일단 내가 알고 있는건 ori_base 는 call/pop 을 쓰는데 왜 그런건지 한번 다시 찾아보자
+현재 문제는 저 ori_base 가 _stub 의 주소를 구한다는 사실이다. 
+설명을 하자면 철수는 10 칸 앞으로 갔다. 그리고 한칸 앞으로 간다음 지도를 보고 좌쵸 계를 얻었다. 그리고 자기가 한칸 욺직인 1 을 뺐다.
+즉 현재 자기가 어떤 좌표계에 있는지 알게 된 것이다.
+현재 ; dq(8byte) Entry point address:  -> index 3 으로 변경했으며 
+ori_base 에서 빼주는데 어떻게 될지 모르겠다.
+현재 복호화 는되는 것같은데 문제는 두번째 mprotect 함수를 사용할때 rdx 즉 세번째 인자가 이상하게 들어가서 오류가 난다. 
+prot 값이 들어가야하는데 rdx 값이 rsi의 값이 들어가고 메모리 보호 flag 가 이상하게 돌아간다. gef > catch syscall mprotect  로 systemcall 을 추적할 수 있다.
+문제는 USE_MPROTEC  에서 CTX_SI 를 초기화 하고 그 값을 다시 CTX_DX 에 넣어준다.  -> falg 값을 push 하고 다시 pop 해서 뽑기로 했다.
+
+이제는 segmentaion 이 발생한다.
+
+
+지금 문제가 return 하는 주소가 이상한 것 같다. 왜일까 한번 검사를 처음 stack 을 쌓는 곳을 봐보자 처음에 return 하는 주소도 이상하다. 아까 와 같다. 
+위에 예시를 들었던 철수가 이상 행동하는 것 이랑 똑같은 상황이다. 
+또 문제가 생긴 이유는 암호화 하는 부분과 복호화 하는 부분이 다르게 동작했기 때문이다.
+내일 은 암호화 하는 부분을 더 보충 해보도록하자

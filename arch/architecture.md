@@ -22,7 +22,7 @@ woody : ELF 포멧을 암호화한 woody_woodpacker 의 생산물이다. 실행�
 4. ELF 필수 검증
     - EI_DATA : ELFDATA2LSB 만
     - EI_CALSS : ELFCLASS32 , ELFCLASS64 만
-    - e_type : ET_EXEC
+    - e_type : ET_EXEC, ET_DYN
     - e_machine : EM_386, EM_X86_64
 	- program header table : e_phoff != 0, e_phnum != 0, e_phentsize 검증, 그리고 e_phoff + e_phnum*e_phentsize 범위검사
 	- program header table은 0 <= phdr index < e_phnum 를 지켜야한다.
@@ -40,7 +40,8 @@ woody : ELF 포멧을 암호화한 woody_woodpacker 의 생산물이다. 실행�
 
 [IMPLEMENTATION:CONSTRAINTS]
     - 사용 라이브러리 : libft, ft_printf 해당 디렉토리 수정 금지
-    - 허용함수 :  open / close / mmap / munmap / write / malloc / free / exit / perror / strerror / fpusts / fflush / lseek / mprotect 
-    - 작업 디렉토리 : ./src , ./include
+    - 허용함수 :  open / close / mmap / munmap / write / read / malloc / free / exit / perror / strerror / fputs / fflush / lseek / mprotect / printf series
+    - 작업 디렉토리 : /home/jinseo/jinseo/42_gs/packer/src , /home/jinseo/jinseo/42_gs/packer/include
+	- header path : #include "../include/woody.h"
     - 주석 작성 금지
     - 실행 검증(런타임 테스트)은 하지 않음(정적 검증/명세 준수로 확인)

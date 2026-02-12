@@ -1,148 +1,241 @@
 IMPLEMENTATION DIAGRAM
 
 [COREPRINCIPLES]
-- handle_path()는 절대 바로 ELF로 간주 하지 않는다.
+- 복호화 코드는 SHELLCODE 를 사용한다. 
 - 반드시 아래 순서를 고정한다.
+- key 는 hex 형식이며 print 해야한다.
 
 [PROCESSINGFLOW]
-1. open + fstat + mmap → unit(base=mmap, limit=file_size)
+1. open + lseek + mmap → unit(base=mmap, limit=file_size) → Encryption → open(new file name woody) → write
 2. detect_format(unit)
-    - AR → process_ar_archive(unit)
     - ELF → process_elf_unit(unit)
-    - else → ERR_FORMAT (해당 path 실패, 다음 path)
-3. process_ar_archive는 member payload마다 process_elf_unit(member_unit) 호출
-4. 정책 결정 금지: AR인데도 ELF처럼 처리 같은 우회는 금지.
+    - else → ERR_FORMAT
 
 [MODULERESPONSIBILITY]
-1. 파일명은 예시고, 책임이 핵심입니다.
-    * A) arg.c / arg.h
-        - 옵션 파싱,. path list 구성
-        - unkwon option -> fatal 반환
-        - path 없으면 자동으로 "a.out" 자동 등록
-    * B) io_unit.c / io_unit.h (리소스/단위/추상화)
-        - 현재 해서 단위 를 표현하는 t_unit 도입
-            - const unsigned char *base
-            - uint64_t limit;
-            - const char *display_name(ar member 출력용)
-        - 이 모듈은 리소스 라이프사이클 표준화를 담당(에러 시 누가 무엇을 해제하는지 고정)
-    * C) format_router.c
-        - detect_format(base, limit) :
-            - AR magic(ARMAG) 검사
-            - ELF magic(ELFMAG) 검사
-        - 들 다 아니면 UNKNOWN
-    * D) ar_parser.c
-        - ar archive 해석 :
-            - string table(필요 시)확보
-            - member header 순회
-            - member payload unit 생성 (base / limit 재설정)
-            - payload에서 ELF magic 재검사 후 process_elf_unit 호출
-        - ar_fmag 불일치 시 : ar 해석 중단 + path 실패 (다음 path로)
-    * E) elf_parser.c
-        - ELF 헤더 검증 및 t_MetaData 준비
-        - EI_CALSS 에 따라서 해당하는 멤버선택
-        - section header scan
-        - symbol section 선택(symtab/dynsym)
-        - strtab 검증 및 심볼 raw 로드(t_NmSymData array)
-    * F) sym_classify.c
-        - Symbol Type Determination Rules (A/a/B/b/C/D/d/i/N/n/p/R/r/T/t/U/u/V/v/W/w/?)
-        - Unused Types
-            - c, g, G, s, S, -, I
-        - A/a : 
-            - If `st_shndx` is `SHN_ABS`
-            - If `ELFN_ST_BIND` of `st_info` is `STB_LOCAL`: a
-            - If `ELFN_ST_BIND` of `st_info` is `STB_GLOBAL`: A
-        - B/b:
-            - If `sh_type` is `SHT_NOBITS` AND
-            - `(sh_flag & SHF_ALLOC) != 0`
-            - `(sh_flag & SHF_WRITE) != 0`
-            - If `ELFN_ST_BIND` of `st_info` is `STB_LOCAL`: b
-            - If `ELFN_ST_BIND` of `st_info` is `STB_GLOBAL`: B
-        - C:
-            - If `sh_type` is `SHT_NOBITS` AND
-            - `(sh_flag & SHF_ALLOC) != 0`
-            - `(sh_flag & SHF_WRITE) != 0`
-            - If `st_shndx` is `SHN_COMMON`
-        - D/d:
-            - If `sh_type` is `SHT_PROGBITS` AND
-            - `(sh_flag & SHF_ALLOC) != 0`
-            - `(sh_flag & SHF_WRITE) != 0`
-            - If `ELFN_ST_BIND` of `st_info` is `STB_LOCAL`: d
-            - If `ELFN_ST_BIND` of `st_info` is `STB_GLOBAL`: D
-        - i: 
-            - If `ELFN_ST_TYPE` of `st_info` is `STT_GNU_IFUNC`
-        - N:
-            - If `sh_type` is `SHT_PROGBITS` AND
-            - `sh_flag` is 0 (none)
-        - n:
-            - If `sh_type` is `SHT_PROGBITS` AND
-            - `(sh_flag & SHF_WRITE) == 0` for `sh_flag`
-        - p:
-            - Here, p is a symbol type character, not an option (only `-P` exists as an option).
-            - Consider 64-bit criteria only.
-            - If `sh_type` is `SHT_X86_64_UNWIND`, it is p.
-        - R/r:
-            - If `sh_type` is `SHT_PROGBITS` AND
-            - `(sh_flag & SHF_WRITE) == 0` for `sh_flag` AND
-            - `sh_flag` is `SHF_ALLOC`
-            - If `ELFN_ST_BIND` of `st_info` is `STB_LOCAL`: r
-            - If `ELFN_ST_BIND` of `st_info` is `STB_GLOBAL`: R
-        - T/t:
-            - If `sh_type` is `SHT_PROGBITS` AND
-            - `sh_flag` is `SHF_ALLOC` AND `SHF_EXECINSTR`
-            - If `ELFN_ST_BIND` of `st_info` is `STB_LOCAL`: t
-            - If `ELFN_ST_BIND` of `st_info` is `STB_GLOBAL`: T
-        - U: 
-            - If `st_shndx` is `SHN_UNDEF` AND
-            - `ELFN_ST_BIND` of `st_info` is NOT `STB_WEAK`K 이 아닌경우
-        - u:
-            - If `ELFN_ST_BIND` of `st_info` is `STB_GNU_UNIQUE`
-        - V/v : 
-            - When `ELFN_ST_BIND` of `st_info` is `STB_WEAK`
-            - If `ELFN_ST_TYPE` of `st_info` is `STT_OBJECT` AND
-            - If `st_shndx` is `SHN_UNDEF` (undefined): v
-            - If `st_shndx` is defined: V
-        - W/w :
-            - When `ELFN_ST_BIND` of `st_info` is `STB_WEAK`
-            - If `ELFN_ST_TYPE` of `st_info` is NOT `STT_OBJECT`
-            - If `st_shndx` is `SHN_UNDEF` (undefined): w
-            - If `st_shndx` is defined: W
-        - ?:
-            - Cases other than the above. 
-    * G) sort_filter_print.c
-        - 옵션 우선순위에 따라 visible list 구성
-        - 정렬(n/r)
-        - 출력(P/일반)
-        - quick sort 만들어서 사용 swap 은 stack 메모리 활용
+1. File name is Example and accountability is import
+	* A) arg.c / arg.h
+		- Responsibility: Parse command line arguments and manage encryption key
+		- Arguments:
+			* argv[1]: path to input ELF binary (required)
+			* argv[2]: encryption key in hex format (optional)
+				- Format: "0x1234567890abcdef" or "1234567890abcdef"
+				- Length: exactly 16 hex characters (8bytes)
+		- Key generation:
+			* if argv[2] not provoded: read 8 bytes form /dev/urandom\
+			* Vaildation: hex string must be vaild and exactly 16 characters
+		- Key output:
+			* Print to stdout: "KEY: 0x%016lx\n"
+			* Execute immediately after key generation/parsing
+		- return key
+		- Error handling:
+			* argc < 2 or > 3: return ERR_USAGE
+			* Invalid hex format: return ERR_KEY_FORMAT
+			* /dev/urandom read failure: return ERR_KEY_GEN
+		- Function signature
+			* int parse_args(int argc, char **argv, uint64_t *key);
+	* B) io_unit.c / io_unit.h (resource/unit/abstract)
+		- Responsibility: Manage memory-mapped filecycle and provide t_uint abstraction
+		- Resource management functions:
+			* int create_unit_from_path(const char *path, t_unit *unit);
+			* void destroy_unit(t_unit *unit);
+		- Lifecycle contract:
+			* create_unit_from_path() is responsible for: open -> lseek -> mmap -> close
+			* destroy_unit() is responsible for: munmap
+			* Caller must call destroy_unit() in all exit paths(success for error)
+		- Error cases:
+			* open() fails: return ERR_OPEN
+			* lseek() fails: close fd, return ERR_LSEEK
+			* mmap() fails: close fd, return ERR_MMAP
+			* file size = 0: close fd, return ERR_EMPTY_FILE
+	* C) format_router.c
+		- Responsibility: Detect file format by checking magic bytes
+		- Function signature:
+			* int detect_format(const t_unit *unit);
+		- Detection logic:
+			1. CHECK_RANGE(0, 4, unit->limit) - minimum 4 bytes for ELF magic
+			2. Compare first 4 bytes with ELFMAG ("\x7fELF")
+			3. If match: return FORMAT_ELF
+			4. If not match: return ERR_FORMAT
+		- Magic validation:
+			* ELF magic: unit->base[0] == 0x7f
+			* ELF magic: unit->base[1] == 'E'
+			* ELF magic: unit->base[2] == 'L'
+			* ELF magic: unit->base[3] == 'F'
+			* Or use: memcmp(unit->base, ELFMAG, SELFMAG) == 0
+		- Error handling:
+			* File too small (< 4 bytes): return ERR_FORMAT
+			* Magic mismatch: return ERR_FORMAT
+		- Return values:
+			* FORMAT_ELF: valid ELF format detected
+			* ERR_FORMAT: not an ELF file or invalid
+	* D) elf_parser.c
+		- Responsibility: Validate ELF header and initialize t_unit ELF-specific fields
+		- Function signature:
+			* int parse_elf_header(t_unit *unit);
+		- Validation sequence (must be in this order):
+			1. CHECK_RANGE(0, sizeof(Elf64_Ehdr), unit->limit)
+				- Use Elf64_Ehdr as maximum size (both 32/64 bit)
+			2. ELF magic: already checked by format_router
+			3. EI_CLASS validation:
+				- Must be ELFCLASS32 or ELFCLASS64
+				- Store in unit->elf_class
+				- If invalid: return ERR_INVALID_CLASS
+			4. EI_DATA validation:
+				- Must be ELFDATA2LSB (little-endian only)
+				- If invalid: return ERR_INVALID_ENDIAN
+			5. e_type validation:
+				- Must be ET_EXEC or ET_DYN
+				- ET_DYN: PIE executable (position-independent)
+				- If invalid: return ERR_INVALID_TYPE
+			6. e_machine validation:
+				- If ELFCLASS32: must be EM_386
+				- If ELFCLASS64: must be EM_X86_64
+				- If mismatch: return ERR_INVALID_MACHINE
+		- Program header table validation:
+			1. e_phoff must be != 0
+			2. e_phnum must be != 0 and <= PN_XNUM (65535)
+			3. e_phentsize validation:
+				- If e_phentsize == 0: use sizeof(Elf32_Phdr) or sizeof(Elf64_Phdr)
+				- Else: must match expected size
+			4. Range check: CHECK_RANGE(e_phoff, e_phnum * phentsize, unit->limit)
+			5. If validation fails: return ERR_INVALID_PHDR
+		- Union initialization:
+			* Set unit->ElfN_Ehdr.Ehdr32 or Ehdr64 = (ElfXX_Ehdr *)unit->base
+			* Set unit->ElfN_Phdr.Phdr32 or Phdr64 = (ElfXX_Phdr *)(unit->base + e_phoff)
+	* E) check_meta.c
+		- Responsibility: Identify encryption targets and validate stub injection space
+		- Function signatures:
+			* int collect_encryption_segments(const t_unit *unit, t_encryption **enc_array, t_meta **meta_array, size_t *count);
+		- Segment filtering (iterate all program headers):
+			1. p_type must be PT_LOAD
+			2. p_offset must be != 0 (skip first PT_LOAD if p_offset == 0)
+			3. p_filesz must be > 0 (skip empty segments)
+			4. Range validation: CHECK_RANGE(p_offset, p_filesz, unit->limit)
+		- For each valid PT_LOAD segment:
+			* Store t_encryption:
+				- p_offset: segment file offset
+				- p_filesize: segment file size (p_filesz)
+				- in_stub: initially 0
+			* Store t_meta:
+				- p_vaddr: segment virtual address
+				- p_memsz: segment memory size
+				- p_reverse_flags: convert_pflags_to_prot(p_flags)
+		- Stub space calculation:
+			* Required size:
+				- If ELFCLASS32: 352 + 16 + 32 + (N * 24) bytes
+				- If ELFCLASS64: 496 + 16 + 32 + (N * 24) bytes
+				- Where N = number of PT_LOAD segments only encryption_segments
+			* Available space formula:
+				- For each PT_LOAD: available = p_memsz - p_filesz
+				- (size + 4095) & ~(0xfff); padding 
+			* Stub injection criteria:
+				- p_flags must have (PF_R | PF_X) - readable and executable
+				- available >= required_size
+				- Set in_stub = 1 for first segment meeting criteria
+		- p_flags to mprotect conversion:
+
+		```c
+		int convert_pflags_to_prot(uint32_t p_flags) {
+			int prot = 0;
+			if (p_flags & PF_R) prot |= PROT_READ;   // 0x4 → 0x1
+			if (p_flags & PF_W) prot |= PROT_WRITE;  // 0x2 → 0x2
+			if (p_flags & PF_X) prot |= PROT_EXEC;   // 0x1 → 0x4
+			return prot;
+		}
+		```
+		- Memory allocation:
+			* Allocate *enc_array = malloc(sizeof(t_encryption) * count)
+			* Allocate *meta_array = malloc(sizeof(t_meta) * count)
+			* Caller must free both arrays
+		- Error handling:
+			* No PT_LOAD segments: return ERR_NO_LOAD_SEGMENT
+			* No suitable stub space: return ERR_NO_STUB_SPACE
+			* Allocation failure: return ERR_MALLOC
+	* F) encryption_xor.c
+		- Responsibility: XOR encrypt PT_LOAD segments in-place
+		- Function signature:
+			* int encrypt_segment(unsigned char *base, uint64_t limit, const t_encryption *enc, uint64_t key);
+		- Encryption algorithm:
+			1. Range validation: CHECK_RANGE(enc->p_offset, enc->p_filesize, limit)
+			2. Get segment pointer: ptr = base + enc->p_offset
+			3. XOR in 8-byte units:
+				```c
+				for (i = 0; i + 8 <= enc->p_filesize; i += 8) {
+					*(uint64_t *)(ptr + i) ^= key;
+				}
+				```
+			4. XOR remaining bytes (< 8):
+				```c
+				uint8_t *key_bytes = (uint8_t *)&key;
+				for (; i < enc->p_filesize; i++) {
+				    ptr[i] ^= key_bytes;
+				}
+				```
+		- Important notes:
+			* Encryption modifies unit->base memory (mmap with PROT_WRITE)
+			* XOR is symmetric: same operation for encrypt/decrypt
+			* Key must be in native endianness (uint64_t)
+			* Range check prevents buffer overflow
+		- Error handling:
+			* Invalid range: return ERR_RANGE
+			* enc->p_filesize == 0: skip encryption, return OK
+	* G) enter_data.c / write_output.c (split responsibility)
+		- Responsibility: Create output file with shellcode and metadata embedded
+		- Module G1: enter_data.c
+			* Function: int prepare_payload(uint8_t **payload, size_t *payload_size, const t_unit *unit, const t_encryption *stub_enc,const t_meta *meta_array, size_t meta_count, uint64_t key);
+			* Payload structure (sequential bytes):
+				1. Shellcode:
+					- If ELFCLASS32: shellcode_32_bin (352 bytes)
+					- If ELFCLASS64: shellcode_64_bin (496 bytes)
+				2. Marker string (16 bytes):
+					- "....WOODY....\n\0\0"
+				3. Metadata (all uint64_t, little-endian):
+					- real_entry: original e_entry from ELF header
+					- stub_vaddr: stub_enc->t_meta.p_vaddr (injection segment vaddr)
+					- key: encryption key
+					- meta_count: number of PT_LOAD segments
+					- For each meta in meta_array (24 bytes each):
+						* p_vaddr (8 bytes)
+						* p_memsz (8 bytes)
+						* p_reverse_flags (8 bytes)
+						* Memory allocation:
+					- Total size = shellcode_len + 16 + 40 + (meta_count * 24)
+					- Allocate payload buffer with malloc
+					- Serialize all data sequentially
+					- Return allocated buffer and size
+		- Module G2: write_output.c
+			* Function: int write_woody_file(const t_unit *unit, const uint8_t *payload, size_t payload_size, const t_encryption *stub_enc);
+			* File creation process:
+				1. Open output file: fd = open("woody", O_CREAT|O_WRONLY|O_TRUNC, 0755)
+				2. Write original file content:
+					- write(fd, unit->base, unit->limit)
+				3. Modify ELF header in output:
+					- Seek to e_entry offset: lseek(fd, offsetof(ElfXX_Ehdr, e_entry), SEEK_SET)
+					- Calculate new entry: stub_enc->t_meta.p_vaddr + stub_enc->p_offset
+					- Write new e_entry value
+				4. Modify program header (stub segment):
+					- Seek to stub phdr: lseek(fd, e_phoff + stub_index * e_phentsize, SEEK_SET)
+					- Update p_filesz: p_filesz += payload_size
+					- Write modified program header
+				5. Append payload:
+					- Seek to end of stub segment: lseek(fd, stub_enc->p_offset + original_p_filesz, SEEK_SET)
+					- write(fd, payload, payload_size)
+				6. Close file
+					* Error handling:
+						- open() fails: return ERR_OPEN
+						- write() fails: close fd, unlink("woody"), return ERR_WRITE
+						- lseek() fails: close fd, unlink("woody"), return ERR_LSEEK
+
 
 [FUNCCONTRACT]
 - 공통 반환 규약
     - OK: 계속 진행
-    - SKIP_UNIT: 현재 unit만 건너뛰고 상위 루프로 복귀
-    - FAIL_PATH: 현재 path 처리 실패(상위에서 다음 path)
-    - FATAL: 프로그램 종료해야 하는 수준(unknown option 같은 케이스 전용)
-- 프로그램 종료하지 않는다 정책을 코드로 복잡하게 만들지 않기 위해, 대부분은 FAIL_PATH/SKIP_UNIT로 표현하고, FATAL은 진짜 제한적으로 사용.
+    - FATAL: 프로그램 종료해야 하는 수준
 
-[CoreContractExample]
-- int process_path(const char *path, uint32_t opt);
-    - mmap 까지 성공하면 t_unit 생성
-    - detect_fomat 호출
-    - 마지막에 항상 munmap/close 정리(단일 cleanup 블록)
-- int process_elf_unit(const t_unit *unit, uint32_t opt);
-    - unit base/limit만 사용 (절대 외부 파일 크기 참조 금지)
-    - t_MetaData 초기화 및 검증
-    - symbols 로드/정렬/출력
-- int process_ar_archive(const t_unit *unit, uint32_t opt);
-    - ar magic 검사 통과가 전제
-    - member loop 내부에서 매 member마다
-        - check header range
-        - name parsing
-        - create payload unit (reflect align)
-        - check payload ELF magic
-            - pass process_elf_unit(payload_unit)
-            - if ar_fmag check fail is FAIL_PATH
 
 [RULETABLE]
 - ranege rule (global)
+
 | item | rule |
 | --- | --- |
 | Required Before Access | CHECK_RANGE(offset,size,limit) |
@@ -150,72 +243,47 @@ IMPLEMENTATION DIAGRAM
 | MOVE ADDRESS | MOVE_ADDRESS(base,offset)is not check range (Pre-call inspection required) |
 | base mean | Start current interpretation unit (file mmap or member payload) |
 
-- ar Member Circulation Rules
-| stage | input | check | result |
-| --- | --- | --- | --- |
-| ar magic | unit base | memcmp(base, ARMAG, SARMAG)==0 | or FAIL_PATH |
-| member header | member_off | CHECK_RANGE(member_off, sizeof(struct ar_hdr), limit) | or FAIL_PATH |
-| ar_fmag | ar_hdr.ar_fmag | memcmp(ar_fmag, ARFMAG, 2)==0 | or FAIL_PATH |
-| member size | ar_hdr.ar_size | decimal parse + range | payload size |
-| payload unit | base+payload_off | payload limit=member_size | payload에서 ELF magic re check |
-| alignment | member_end | and then member_off = align2(member_end) | even padding |
-
-- ar_name parsing rule (fixed 16byte)
-| case | term | extract name |
-| --- | --- | --- |
-| inline name | ar_name is not "/<digits>" | '/' at the end of ar_name[16] or empty trim|
-| string table | ar_name is "/<digits>" format  | Restore digits from string table to offset |
-| Prohibition of termination | No '\0' | Must handle 16-byte only |
-
-- archive format 에서 "//" 는 기억해서 필여한 member payload name 추출
-
 [DEFINITIONOFDONE]
 - 아래는 코드 실행 없이도 정적으로 확인 가능한 DoD입니다.
 
-- DoD-ELF (필수 8)
+- DoD-ELF (필수 6)
     1. ELF magic/클래스/엔디안 검증이 process_elf_unit 초반에 존재
-    2. e_shoff/e_shnum/e_shentsize 검증 및 e_shoff + e_shnum*e_shentsize range 검사 존재
-    3. section header 접근 전에 반드시 range 검사(엔트리 단위)
-    4. symtab 우선, 없으면 dynsym 시도 로직 존재
-    5. sh_link < e_shnum 검증 존재
-    6. sym 엔트리 size가 0이면 sizeof로 치환하는 로직 존재
-    7. strtab 접근 전에 st_name < strtab_size 및 memchr 널 확인 존재
-    8. base/limit이 “unit 기준”으로만 사용됨(파일 전체 기준 참조 금지)
-
-- DoD-AR (필수 7)
-    1. AR magic 검사 후에만 ar 파서 진입
-    2. ar_fmag ft_memcmp 검사 존재, 실패 시 FAIL_PATH
-    3. member payload를 unit(base/limit)로 재정의
-    4. payload에서 ELF magic 재검사 존재
-    5. member offset 계산에 align2 반영
-    6. ar_name은 16바이트 내에서만 파싱(널 종결 가정 없음)
-    7. "/<digits>"일 때만 string table 복원, 그 외는 inline trim
+    2. e_phoff/e_phnum/e_phentsize 검증 및 e_phoff + e_phnum*e_phentsize range 검사 존재
+    3. program header 접근 전에 반드시 range 검사(엔트리 단위)
+    4. p_offset/p_filesz 조합에 대해 p_offset + p_filesz range 검사 존재
+    5. phdr 엔트리 size가 0이면 sizeof(ElfXX_Phdr)로 치환하는 로직 존재
+    6. base/limit이 “unit 기준”으로만 사용됨(파일 전체 기준 참조 금지)
 
 - DoD-정책/리소스 (필수 6)
-    1. unknown option은 fatal 처리
-    2. 시스템 오류는 path 실패로 처리하되 프로그램 전체 종료는 하지 않음
     3. 모든 분기에서 open/mmap/malloc 자원 해제가 보장되는 cleanup 구조 존재
     4. free 후 NULL guard 적용(가능한 범위에서)
     5. CHECK_RANGE 없이 MOVE_ADDRESS 결과를 역참조하는 코드가 없음
-    6. 옵션 우선순위(a/g/u > n > P)대로 필터/정렬/출력 적용
+	8. Error 처리 지점은 NM_LOG 매크로를 사용해서 error 를 처리를 한다.
 
 
 [DATASTRUCT]
 ```c
 typedef struct s_unit{
-    const unsigned char *base;
-    const uint64_t limit;
-    const char * display_name;
+	const unsigned char *base;
+	uint64_t limit;
+	uint64_t key;
 	union {
-        const Elf32_Ehdr    *Ehdr32;
-        const Elf64_Ehdr    *Ehdr64;
-    }ElfN_Ehdr;
-    union {
-        const Elf32_Phdr    *Phdr32;
-        const Elf64_Phdr    *Phdr64;
-    }ElfN_Phdr;
-    const uint8_t elf_class; // set bit type in elf header
+		const Elf32_Ehdr    *Ehdr32;
+		const Elf64_Ehdr    *Ehdr64;
+	}ElfN_Ehdr;
+	union {
+		const Elf32_Phdr    *Phdr32;
+		const Elf64_Phdr    *Phdr64;
+	}ElfN_Phdr;
+	uint32_t fd;
+	uint8_t elf_class; // set bit type in elf header
 }t_unit;
+
+typedef struct s_encryption{
+	uint64_t p_offset;
+	uint64_t p_filesize;
+	uint8_t  in_stub;
+}t_encryption;
 
 typedef struct s_meta{
 	uint64_t p_vaddr; //
@@ -241,8 +309,28 @@ typedef struct s_meta{
         }
     // error enum
         #define ERROR_LIST \
-            X(ERR_MALLOC, "ERR_MALLOC") \
-            X(ERR_OPENDIR, "ERR_OPENDIR") \
+			X(ERR_MALLOC, "Memory allocation failed") \
+			X(ERR_OPEN, "File open failed") \
+			X(ERR_USAGE, "Invalid arguments") \
+			X(ERR_KEY_FORMAT, "Invalid key format") \
+			X(ERR_KEY_GEN, "Failed to generate random key") \
+			X(ERR_READ, "Read operation failed") \
+			X(ERR_FORMAT, "Unknown file format") \
+			X(ERR_LSEEK, "Lseek failed")
+			X(ERR_MMAP, "Mmap failed")
+			X(ERR_EMPTY_FILE, "File is empty")
+			X(ERR_LSEEK, "Lseek failed")
+			X(FORMAT_ELF, "ELF format detected")  // Not an error, but return code
+			X(ERR_INVALID_CLASS, "Invalid ELF class")
+			X(ERR_INVALID_ENDIAN, "Only little-endian supported")
+			X(ERR_INVALID_TYPE, "Invalid ELF type (must be ET_EXEC or ET_DYN)")
+			X(ERR_INVALID_MACHINE, "Invalid machine type")
+			X(ERR_INVALID_PHDR, "Invalid program header table")
+			X(ERR_NO_LOAD_SEGMENT, "No PT_LOAD segment found")
+			X(ERR_NO_STUB_SPACE, "No space for shellcode injection")
+			X(ERR_RANGE, "Range check failed")
+			X(ERR_WRITE, "Write operation failed")
+			X(ERR_UNLINK, "Failed to remove output file")
             ...
 
         typedef enum e_error {

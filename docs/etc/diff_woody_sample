@@ -1,0 +1,171 @@
+sdiff -s <(objdump -D woody) <(objdump -D sample)
+
+woody:     file format elf64-x86-64			      |	sample:     file format elf64-x86-64
+    1000:	07                   	(bad)  		      |	    1000:	f3 0f 1e fa          	endbr64 
+    1001:	80 e4 c3             	and    $0xc3,%ah      |	    1004:	48 83 ec 08          	sub    $0x8,%rsp
+    1004:	64 9c                	fs pushf 	      |	    1008:	48 8b 05 d9 2f 00 00 	mov    0x2fd9(%rip),%
+    1006:	f1                   	int1   		      |	    100f:	48 85 c0             	test   %rax,%rax
+    1007:	79 bc                	jns    fc5 <__abi_tag |	    1012:	74 02                	je     1016 <_init+0x
+    1009:	04 ff                	add    $0xff,%al      |	    1014:	ff d0                	call   *%rax
+    100b:	e0 03                	loopne 1010 <_init+0x |	    1016:	48 83 c4 08          	add    $0x8,%rsp
+    100d:	1f                   	(bad)  		      |	    101a:	c3                   	ret    
+    100e:	1d 39 71 4f 8e       	sbb    $0x8e4f7139,%e <
+    1013:	3b d3                	cmp    %ebx,%edx      <
+    1015:	cf                   	iret   		      <
+    1016:	55                   	push   %rbp	      <
+    1017:	f2                   	repnz		      <
+    1018:	30                   	.byte 0x30	      <
+    1019:	87 39                	xchg   %edi,(%rcx)    <
+    1020:	0b ba 60 16 2c 1f    	or     0x1f2c1660(%rd |	    1020:	ff 35 9a 2f 00 00    	push   0x2f9a(%rip)  
+    1026:	ef                   	out    %eax,(%dx)     |	    1026:	f2 ff 25 9b 2f 00 00 	bnd jmp *0x2f9b(%rip)
+    1027:	8e d1                	mov    %ecx,%ss	      |	    102d:	0f 1f 00             	nopl   (%rax)
+    1029:	14 d5                	adc    $0xd5,%al      |	    1030:	f3 0f 1e fa          	endbr64 
+    102b:	39 2c 10             	cmp    %ebp,(%rax,%rd |	    1034:	68 00 00 00 00       	push   $0x0
+    102e:	02 71 07             	add    0x7(%rcx),%dh  |	    1039:	f2 e9 e1 ff ff ff    	bnd jmp 1020 <_init+0
+    1031:	80 e4 c3             	and    $0xc3,%ah      |	    103f:	90                   	nop
+    1034:	44 1f                	rex.R (bad) 	      <
+    1036:	1d 71 f4 7d 13       	sbb    $0x137df471,%e <
+    103b:	d8 d3                	fcom   %st(3)	      <
+    103d:	e0 e2                	loopne 1021 <_init+0x <
+    103f:	e1                   	.byte 0xe1	      <
+0000000000001040 <.plt.got>:				      |	0000000000001040 <__cxa_finalize@plt>:
+    1040:	07                   	(bad)  		      |	    1040:	f3 0f 1e fa          	endbr64 
+    1041:	80 e4 c3             	and    $0xc3,%ah      |	    1044:	f2 ff 25 ad 2f 00 00 	bnd jmp *0x2fad(%rip)
+    1044:	de e0                	fsubp  %st,%st(0)     |	    104b:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,
+    1046:	38 dc                	cmp    %bl,%ah	      <
+    1048:	db 8f fa 36 33 5b    	fisttpl 0x5b3336fa(%r <
+    104e:	1d                   	.byte 0x1d	      <
+    104f:	71                   	.byte 0x71	      <
+0000000000001050 <.plt.sec>:				      |	0000000000001050 <puts@plt>:
+    1050:	07                   	(bad)  		      |	    1050:	f3 0f 1e fa          	endbr64 
+    1051:	80 e4 c3             	and    $0xc3,%ah      |	    1054:	f2 ff 25 75 2f 00 00 	bnd jmp *0x2f75(%rip)
+    1054:	de e0                	fsubp  %st,%st(0)     |	    105b:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,
+    1056:	38 04 db             	cmp    %al,(%rbx,%rbx <
+    1059:	8f                   	(bad)  		      <
+    105a:	fa                   	cli    		      <
+    105b:	36 33 5b 1d          	ss xor 0x1d(%rbx),%eb <
+    105f:	71                   	.byte 0x71	      <
+    1060:	07                   	(bad)  		      |	    1060:	f3 0f 1e fa          	endbr64 
+    1061:	80 e4 c3             	and    $0xc3,%ah      |	    1064:	31 ed                	xor    %ebp,%ebp
+    1064:	1d f2 54 f8 25       	sbb    $0x25f854f2,%e |	    1066:	49 89 d1             	mov    %rdx,%r9
+    1069:	d1 b2 b0 ce 57 9e    	shll   -0x61a83150(%r |	    1069:	5e                   	pop    %rsi
+    106f:	95                   	xchg   %eax,%ebp      |	    106a:	48 89 e2             	mov    %rsp,%rdx
+    1070:	04 df                	add    $0xdf,%al      |	    106d:	48 83 e4 f0          	and    $0xfffffffffff
+    1072:	ae                   	scas   %es:(%rdi),%al |	    1071:	50                   	push   %rax
+    1073:	7c 1d                	jl     1092 <deregist |	    1072:	54                   	push   %rsp
+    1075:	df 2c b8             	fildll (%rax,%rdi,4)  |	    1073:	45 31 c0             	xor    %r8d,%r8d
+    1078:	bc 02 c7 f3 2c       	mov    $0x2cf3c702,%e |	    1076:	31 c9                	xor    %ecx,%ecx
+    107d:	1f                   	(bad)  		      |	    1078:	48 8d 3d ca 00 00 00 	lea    0xca(%rip),%rd
+    107e:	1d 8e e1 dc d5       	sbb    $0xd5dce18e,%e |	    107f:	ff 15 53 2f 00 00    	call   *0x2f53(%rip) 
+    1083:	39 2c eb             	cmp    %ebp,(%rbx,%rb |	    1085:	f4                   	hlt    
+    1086:	7b 5f                	jnp    10e7 <register |	    1086:	66 2e 0f 1f 84 00 00 	cs nopw 0x0(%rax,%rax
+    1088:	fb                   	sti    		      |	    108d:	00 00 00 
+    1089:	90                   	nop		      <
+    108a:	7e 39                	jle    10c5 <register <
+    108c:	2c 1f                	sub    $0x1f,%al      <
+    108e:	1d 71          	sbb    $0xc702bc71,%eax	      <
+    1090:	bc 02 c7 40 03       	mov    $0x340c702,%es |	    1090:	48 8d 3d 79 2f 00 00 	lea    0x2f79(%rip),%
+    1095:	1f                   	(bad)  		      |	    1097:	48 8d 05 72 2f 00 00 	lea    0x2f72(%rip),%
+    1096:	1d 39 79 8a 88       	sbb    $0x888a7939,%e |	    109e:	48 39 f8             	cmp    %rdi,%rax
+    109b:	16                   	(bad)  		      |	    10a1:	74 15                	je     10b8 <deregist
+    109c:	2c 1f                	sub    $0x1f,%al      |	    10a3:	48 8b 05 36 2f 00 00 	mov    0x2f36(%rip),%
+    109e:	55                   	push   %rbp	      |	    10aa:	48 85 c0             	test   %rax,%rax
+    109f:	48 0c fb             	rex.W or $0xfb,%al    |	    10ad:	74 09                	je     10b8 <deregist
+    10a2:	ef                   	out    %eax,(%dx)     |	    10af:	ff e0                	jmp    *%rax
+    10a3:	71 a7                	jno    104c <_init+0x |	    10b1:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+    10a5:	1a 2b                	sbb    (%rbx),%ch     |	    10b8:	c3                   	ret    
+    10a7:	5e                   	pop    %rsi	      |	    10b9:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+    10a8:	f4                   	hlt    		      <
+    10a9:	8f                   	(bad)  		      <
+    10aa:	b2 bc                	mov    $0xbc,%dl      <
+    10ac:	ec                   	in     (%dx),%al      <
+    10ad:	6b 14 8e 14          	imul   $0x14,(%rsi,%r <
+    10b1:	80 e5 b9             	and    $0xb9,%ch      <
+    10b4:	2c 1f                	sub    $0x1f,%al      <
+    10b6:	1d 71 37 80 e5       	sbb    $0xe5803771,%e <
+    10bb:	b9 2c 1f 1d 71       	mov    $0x711d1f2c,%e <
+    10c0:	bc 02 c7 70 03       	mov    $0x370c702,%es |	    10c0:	48 8d 3d 49 2f 00 00 	lea    0x2f49(%rip),%
+    10c5:	1f                   	(bad)  		      |	    10c7:	48 8d 35 42 2f 00 00 	lea    0x2f42(%rip),%
+    10c6:	1d 39 79 ba b8       	sbb    $0xb8ba7939,%e |	    10ce:	48 29 fe             	sub    %rdi,%rsi
+    10cb:	16                   	(bad)  		      |	    10d1:	48 89 f0             	mov    %rsi,%rax
+    10cc:	2c 1f                	sub    $0x1f,%al      |	    10d4:	48 c1 ee 3f          	shr    $0x3f,%rsi
+    10ce:	55                   	push   %rbp	      |	    10d8:	48 c1 f8 03          	sar    $0x3,%rax
+    10cf:	58                   	pop    %rax	      |	    10dc:	48 01 c6             	add    %rax,%rsi
+    10d0:	0a c7                	or     %bh,%al	      |	    10df:	48 d1 fe             	sar    %rsi
+    10d2:	73 c9                	jae    109d <deregist |	    10e2:	74 14                	je     10f8 <register
+    10d4:	64 de f3             	fs fdivp %st,%st(3)   |	    10e4:	48 8b 05 05 2f 00 00 	mov    0x2f05(%rip),%
+    10d7:	4e bc 4e 02 3a 64 1e 	rex.WRX movabs $0x253 |	    10eb:	48 85 c0             	test   %rax,%rax
+    10de:	db 39 25 				      |	    10ee:	74 08                	je     10f8 <register
+    10e1:	71 8e                	jno    1071 <_start+0 |	    10f0:	ff e0                	jmp    *%rax
+    10e3:	2d 64 94 18 74       	sub    $0x74189464,%e |	    10f2:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,
+    10e8:	db 8f fa 71 a9 df    	fisttpl -0x20568e06(% |	    10f8:	c3                   	ret    
+    10ee:	69 79 0b 6f 9c 36 33 	imul   $0x33369c6f,0x |	    10f9:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+    10f5:	5b                   	pop    %rbx	      <
+    10f6:	1d 71 37 80 e5       	sbb    $0xe5803771,%e <
+    10fb:	b9 2c 1f 1d 71       	mov    $0x711d1f2c,%e <
+    1100:	07                   	(bad)  		      |	    1100:	f3 0f 1e fa          	endbr64 
+    1101:	80 e4 c3             	and    $0xc3,%ah      |	    1104:	80 3d 05 2f 00 00 00 	cmpb   $0x0,0x2f05(%r
+    1104:	ac                   	lods   %ds:(%rsi),%al |	    110b:	75 2b                	jne    1138 <__do_glo
+    1105:	22 18                	and    (%rax),%bl     |	    110d:	55                   	push   %rbp
+    1107:	5e                   	pop    %rsi	      |	    110e:	48 83 3d e2 2e 00 00 	cmpq   $0x0,0x2ee2(%r
+    1108:	f4                   	hlt    		      |	    1115:	00 
+    1109:	8f                   	(bad)  		      |	    1116:	48 89 e5             	mov    %rsp,%rbp
+    110a:	fa                   	cli    		      |	    1119:	74 0c                	je     1127 <__do_glo
+    110b:	4c 07                	rex.WR (bad) 	      |	    111b:	48 8b 3d e6 2e 00 00 	mov    0x2ee6(%rip),%
+    110d:	4a 55                	rex.WX push %rbp      |	    1122:	e8 19 ff ff ff       	call   1040 <__cxa_fi
+    110f:	f2 c9                	repnz leave 	      |	    1127:	e8 64 ff ff ff       	call   1090 <deregist
+    1111:	6d                   	insl   (%dx),%es:(%rd |	    112c:	c6 05 dd 2e 00 00 01 	movb   $0x1,0x2edd(%r
+    1112:	d4                   	(bad)  		      |	    1133:	5d                   	pop    %rbp
+    1113:	39 2c 1f             	cmp    %ebp,(%rdi,%rb |	    1134:	c3                   	ret    
+    1116:	55                   	push   %rbp	      |	    1135:	0f 1f 00             	nopl   (%rax)
+    1117:	f8                   	clc    		      |	    1138:	c3                   	ret    
+    1118:	11 fb                	adc    %edi,%ebx      |	    1139:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+    111a:	f6 71 a7             	divb   -0x59(%rcx)    <
+    111d:	22 fb                	and    %bl,%bh	      <
+    111f:	5f                   	pop    %rdi	      <
+    1120:	f4                   	hlt    		      <
+    1121:	8f                   	(bad)  		      <
+    1122:	12 20                	adc    (%rax),%ah     <
+    1124:	d3 e0                	shl    %cl,%eax	      <
+    1126:	e2 99                	loop   10c1 <register <
+    1128:	90                   	nop		      <
+    1129:	70 05                	jo     1130 <__do_glo <
+    112b:	c6                   	(bad)  		      <
+    112c:	ea                   	(bad)  		      <
+    112d:	1a c0                	sbb    %al,%al	      <
+    112f:	5f                   	pop    %rdi	      <
+    1130:	f4                   	hlt    		      <
+    1131:	8f                   	(bad)  		      <
+    1132:	fb                   	sti    		      <
+    1133:	64 ef                	fs out %eax,(%dx)     <
+    1135:	10 02                	adc    %al,(%rdx)     <
+    1137:	71 37                	jno    1170 <_fini+0x <
+    1139:	80 e5 b9             	and    $0xb9,%ch      <
+    113c:	2c 1f                	sub    $0x1f,%al      <
+    113e:	1d 71          	sbb    $0xe4800771,%eax	      <
+    1140:	07                   	(bad)  		      |	    1140:	f3 0f 1e fa          	endbr64 
+    1141:	80 e4 c3             	and    $0xc3,%ah      |	    1144:	e9 77 ff ff ff       	jmp    10c0 <register
+    1144:	c5 68 e2             	(bad)		      <
+    1147:	8e 0b                	mov    (%rbx),%cs     <
+    1149:	7c f5                	jl     1140 <frame_du |	    1149:	f3 0f 1e fa          	endbr64 
+    114b:	27                   	(bad)  		      |	    114d:	55                   	push   %rbp
+    114c:	d6                   	(bad)  		      |	    114e:	48 89 e5             	mov    %rsp,%rbp
+    114d:	4a 55                	rex.WX push %rbp      |	    1151:	48 8d 05 ac 0e 00 00 	lea    0xeac(%rip),%r
+    114f:	f8                   	clc    		      |	    1158:	48 89 c7             	mov    %rax,%rdi
+    1150:	11 c7                	adc    %eax,%edi      |	    115b:	e8 f0 fe ff ff       	call   1050 <puts@plt
+    1152:	77 3c                	ja     1190 <_fini+0x |	    1160:	b8 00 00 00 00       	mov    $0x0,%eax
+    1154:	80 11 1d             	adcb   $0x1d,(%rcx)   |	    1165:	5d                   	pop    %rbp
+    1157:	71 bc                	jno    1115 <__do_glo |	    1166:	c3                   	ret    
+    1159:	06                   	(bad)  		      <
+    115a:	3d d1 dc e1 e2       	cmp    $0xe2e1dcd1,%e <
+    115f:	8e 4c 8f fa          	mov    -0x6(%rdi,%rcx <
+    1163:	39 2c 42             	cmp    %ebp,(%rdx,%ra <
+    1166:	de                   	.byte 0xde	      <
+    1168:	07                   	(bad)  		      |	    1168:	f3 0f 1e fa          	endbr64 
+    1169:	80 e4 c3             	and    $0xc3,%ah      |	    116c:	48 83 ec 08          	sub    $0x8,%rsp
+    116c:	64 9c                	fs pushf 	      |	    1170:	48 83 c4 08          	add    $0x8,%rsp
+    116e:	f1                   	int1   		      |	    1174:	c3                   	ret    
+    116f:	79 bc                	jns    112d <__do_glo <
+    1171:	77 30                	ja     11a3 <_fini+0x <
+    1173:	fc                   	cld    		      <
+    1174:	37                   	(bad)  		      <

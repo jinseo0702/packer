@@ -11,7 +11,7 @@ bits 64
 	%define CTX_SP      rsp
 	%define CTX_BP      rbp
 	%define PTR_SIZE    0x8
-	%define CODE_SIZE   0x1F0
+	%define CODE_SIZE   512
 	%define ORI_BASE    r10
 	%define META_ADD    r8
 %else
@@ -25,7 +25,7 @@ bits 32
 	%define CTX_SP      esp
 	%define CTX_BP      ebp
 	%define PTR_SIZE    0x4
-	%define CODE_SIZE   0x160
+	%define CODE_SIZE   368
 	%define ORI_BASE    esi
 	%define META_ADD    edi
 %endif
@@ -126,28 +126,28 @@ bits 32
 ; %2 len
 ; %3 prot
 %ifdef ARCH_64
-	%macro USE_MPROTEC 3
+	%macro USE_MPROTEC 2
 	bits 64
 		INIT_RESI CTX_DI
 		mov CTX_DI, %1
 		INIT_RESI CTX_SI
 		mov CTX_SI, %2
 		INIT_RESI CTX_DX
-		mov CTX_DX, %3
+		pop CTX_DX
 		INIT_RESI CTX_AX
 		mov CTX_AX, 10
 		syscall
 		CHECK_ERROR
 	%endmacro
 %else
-	%macro USE_MPROTEC 3
+	%macro USE_MPROTEC 2
 	bits 32
 		INIT_RESI CTX_BX
 		mov CTX_BX, %1
 		INIT_RESI CTX_CX
 		mov CTX_CX, %2
 		INIT_RESI CTX_DX
-		mov CTX_DX, %3
+		pop CTX_DX
 		INIT_RESI CTX_AX
 		mov CTX_AX, 125
 		syscall
@@ -275,14 +275,16 @@ bits 32
 	%%_done:
 %endmacro
 _stub:
-	INIT_RESI CTX_CX
-	INIT_RESI CTX_AX
+	INIT_RESI CTX_BP
+	FIND_DATA_INDEX CTX_CX, 0x3, 0x8
+	FIND_OFFSET ORI_BASE, 0
+	sub ORI_BASE, [CTX_CX]
 	FIND_DATA_INDEX CTX_CX, 0x2, 0x8
-	FIND_OFFSET CTX_AX, [CTX_CX]
+	INIT_RESI CTX_AX
+	mov CTX_AX, [CTX_CX]
+	add CTX_AX, ORI_BASE
 	push CTX_AX
 	PUSH_ALL_REGISTER
-	INIT_RESI CTX_BP
-	FIND_OFFSET ORI_BASE, 0
 
 _loop:
 	GET_DATA_VALUE CTX_AX, CTX_DI, 0x5
@@ -297,7 +299,9 @@ _decryption:
 	INIT_INSERT_VALUE CTX_SI, (META_ADD + 0x10) ; p_flags
 	test CTX_SI, 0x2 ;  write
 	jnz _skip_mprotec
-	USE_MPROTEC CTX_AX, CTX_DX, 0x7
+	mov CTX_SI, 0x7
+	push CTX_SI
+	USE_MPROTEC CTX_AX, CTX_DX
  
  _skip_mprotec:
 	GET_META_DATA META_ADD, CTX_BP ; META_ADD = meta_data [META_ADD] == offset
@@ -312,7 +316,8 @@ _decryption:
 	pop CTX_AX
 	test CTX_SI, 0x2
 	jnz _loop
-	USE_MPROTEC CTX_AX, CTX_DX, CTX_SI
+	push CTX_SI
+	USE_MPROTEC CTX_AX, CTX_DX
 	jmp _loop
 
 _stub_end:
@@ -323,7 +328,7 @@ align 16
 
 ; db(16byte) ....WOODY....\n\0\0
 ; dq(8byte) real_entry 
-; dq(8byte) p_vaddr 
+; dq(8byte) Entry point address: 
 ; dq(8byte) key
 ; dq(8btye) Meta data num
 
