@@ -74,7 +74,7 @@ static int	fill_arrays_32(const t_unit *unit,
 		if (phdr->p_type == PT_LOAD && phdr->p_offset != 0
 			&& phdr->p_filesz > 0
 			&& CHECK_RANGE(phdr->p_offset, phdr->p_filesz, unit->limit)
-			&& (phdr->p_flags & (PF_R | PF_X)) == (PF_R | PF_X))
+			&& ((phdr->p_flags & (PF_R | PF_X)) == (PF_R | PF_X) || (phdr->p_flags & 0x07) == (PF_R)))
 		{
 			enc[*idx].p_offset = (uint64_t)phdr->p_offset;
 			enc[*idx].p_filesize = (uint64_t)phdr->p_filesz;
@@ -108,7 +108,7 @@ static int	fill_arrays_64(const t_unit *unit,
 		if (phdr->p_type == PT_LOAD && phdr->p_offset != 0
 			&& phdr->p_filesz > 0
 			&& CHECK_RANGE(phdr->p_offset, phdr->p_filesz, unit->limit)
-			&& (phdr->p_flags & (PF_R | PF_X)) == (PF_R | PF_X))
+			&& ((phdr->p_flags & (PF_R | PF_X)) == (PF_R | PF_X) || (phdr->p_flags & 0x07) == (PF_R)))
 		{
 			enc[*idx].p_offset = phdr->p_offset;
 			enc[*idx].p_filesize = phdr->p_filesz;

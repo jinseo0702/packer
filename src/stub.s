@@ -11,7 +11,7 @@ bits 64
 	%define CTX_SP      rsp
 	%define CTX_BP      rbp
 	%define PTR_SIZE    0x8
-	%define CODE_SIZE   512
+	%define CODE_SIZE   592
 	%define ORI_BASE    r10
 	%define META_ADD    r8
 %else
@@ -25,7 +25,7 @@ bits 32
 	%define CTX_SP      esp
 	%define CTX_BP      ebp
 	%define PTR_SIZE    0x4
-	%define CODE_SIZE   368
+	%define CODE_SIZE   448
 	%define ORI_BASE    esi
 	%define META_ADD    edi
 %endif
@@ -321,6 +321,8 @@ _decryption:
 	jmp _loop
 
 _stub_end:
+	FIND_DATA_INDEX CTX_CX, 0x0, 0x8
+	USE_WRITE 0x01, CTX_CX, 0x0E;
 	POP_ALL_REGISTER
 	ret
 

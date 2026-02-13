@@ -144,3 +144,40 @@ prot 값이 들어가야하는데 rdx 값이 rsi의 값이 들어가고 메모�
 위에 예시를 들었던 철수가 이상 행동하는 것 이랑 똑같은 상황이다. 
 또 문제가 생긴 이유는 암호화 하는 부분과 복호화 하는 부분이 다르게 동작했기 때문이다.
 내일 은 암호화 하는 부분을 더 보충 해보도록하자
+
+2026-02-13
+오늘은 더 암호화 를 해보기 위해서 fill_arrays_<arch_bit> 의 조건을 세밀하게 만들어보았다.
+//((phdr->p_flags & (PF_R | PF_X)) == (PF_R | PF_X) || (phdr->p_flags & (PF_R)) == (PF_R))
+이전에는 rw 만 검사를 했지만 현재는 r 도 검사를 하도록 바꾸었는데, 과연 동작을 할 지안할지 모르겠다.
+동작을 안한다. segmentaion error 가 발생한다. 이유가 뭘까 확인 해보니 또 동적 loader 부분을 건드린 것 같다
+```bash
+gef➤  x/g $rip
+0x7ffff7fe6215 <dl_main+6453>:  0x1e87f641085a8b48
+gef➤  bt
+#0  audit_list_add_dynamic_tag (tag=0x6ffffefc, main_map=0x7ffff7ffe2e0, list=0x7fffffffdf70) at ./elf/rtld.c:233
+#1  dl_main (phdr=<optimized out>, phnum=<optimized out>, user_entry=<optimized out>, auxv=<optimized out>) at ./elf/rtld.c:1788
+#2  0x00007ffff7fe283c in _dl_sysdep_start (start_argptr=start_argptr@entry=0x7fffffffe2e0, dl_main=dl_main@entry=0x7ffff7fe48e0 <dl_main>) at ../elf/dl-sysdep.c:256
+#3  0x00007ffff7fe4598 in _dl_start_final (arg=0x7fffffffe2e0) at ./elf/rtld.c:507
+#4  _dl_start (arg=0x7fffffffe2e0) at ./elf/rtld.c:596
+#5  0x00007ffff7fe3298 in _start () from /lib64/ld-linux-x86-64.so.2
+#6  0x0000000000000001 in ?? ()
+#7  0x00007fffffffe5a4 in ?? ()
+#8  0x0000000000000000 in ?? ()
+
+```
+로그를 보니 맞다. 지금 dynamic 부분을 건드리고 있다.
+문제는 비트 마스크 부분인 것 같은데
+((phdr->p_flags & (PF_R | PF_X)) == (PF_R | PF_X) || (phdr->p_flags & (PF_R)) == (PF_R))
+이 부분이 문제인 것같다.
+r 이 하나라도 들어 있다면 (phdr->p_flags & (PF_R)) == (PF_R) 이조건에 부합해서 문제가 생긴다.
+r 만 들어 있는 상태를 확실하게 검사하기 위해서는 어떤 방법이 있을까
+생각을 해보니까 (value & 7) == PF_R 을 확인하면된다. 이렇게 검사를 하면 그냥 r 하나면 PF_R 이랑 같아지겠지
+그리고 or 연산은 왼쪽이 맞으면 오른쪽은 검사를 안한다. 즉 이미 어느정도 분기는 처리가 된다.
+역시 저 문제였다. r 이 들어가 있으면 문조건 ok 를 한다. 이건 문제가 된다. 왜 내하면 dynamic loader 는 내가 아직 제어 하기 힘들기 때문제 저 부분은 건드리면 안된다.
+```bash
+➜  packer git:(main) ✗ nasm -f bin -o shellcode_32.bin stub.s
+➜  packer git:(main) ✗ nasm -DARCH_64 -f bin -o shellcode_64.bin stub.s
+➜  packer git:(main) ✗ xxd -i shellcode_64.bin
+➜  packer git:(main) ✗ sdiff <(objdump -D woody) <(objdump -D sample)
+➜  packer git:(main) ✗
+```
