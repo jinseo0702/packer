@@ -186,3 +186,6 @@ r 만 들어 있는 상태를 확실하게 검사하기 위해서는 어떤 방�
 int		encrypt_segment_32(unsigned char *base, uint64_t limit,
 			const t_encryption *enc, uint64_t key);
 만들기 완료
+shell code size 하드 코딩하는거 방지 용  함수 생성
+uint64_t	get_shellcode_size(uint8_t elf_class); 
+e_phentsize 재 확인 파일이 손상된 경우 방지

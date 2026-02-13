@@ -60,7 +60,10 @@ int	main(int argc, char **argv)
 	while (i < meta_count)
 	{
 		if (unit.elf_class == ELFCLASS32) {
-		
+			err = encrypt_segment_32(unit.base, unit.limit, &enc_array[i], unit.key);
+			if (err != OK)
+				return (cleanup_all(&unit, &enc_array, &meta_array, &payload), NM_LOG(err), 1);
+			i++;
 		}
 		else {
 			err = encrypt_segment(unit.base, unit.limit, &enc_array[i], unit.key);
