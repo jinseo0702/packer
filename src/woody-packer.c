@@ -59,10 +59,15 @@ int	main(int argc, char **argv)
 	i = 0;
 	while (i < meta_count)
 	{
-		err = encrypt_segment(unit.base, unit.limit, &enc_array[i], unit.key);
-		if (err != OK)
-			return (cleanup_all(&unit, &enc_array, &meta_array, &payload), NM_LOG(err), 1);
-		i++;
+		if (unit.elf_class == ELFCLASS32) {
+		
+		}
+		else {
+			err = encrypt_segment(unit.base, unit.limit, &enc_array[i], unit.key);
+			if (err != OK)
+				return (cleanup_all(&unit, &enc_array, &meta_array, &payload), NM_LOG(err), 1);
+			i++;
+		}
 	}
 	err = prepare_payload(&payload, &payload_size, &unit,
 		&enc_array[stub_index], meta_array, meta_count, unit.key);

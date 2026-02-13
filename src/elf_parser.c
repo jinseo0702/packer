@@ -48,6 +48,8 @@ static int	validate_phdr_table_32(t_unit *unit)
 	ehdr = unit->ElfN_Ehdr.Ehdr32;
 	if (ehdr->e_phoff == 0 || ehdr->e_phnum == 0)
 		return (ERR_INVALID_PHDR);
+	if (!(ehdr->e_phentsize == sizeof(Elf32_Phdr)))
+		return (ERR_INVALID_PHDR);
 	phentsize = ehdr->e_phentsize;
 	if (phentsize == 0)
 		phentsize = sizeof(Elf32_Phdr);
@@ -67,6 +69,8 @@ static int	validate_phdr_table_64(t_unit *unit)
 
 	ehdr = unit->ElfN_Ehdr.Ehdr64;
 	if (ehdr->e_phoff == 0 || ehdr->e_phnum == 0)
+		return (ERR_INVALID_PHDR);
+	if (!(ehdr->e_phentsize == sizeof(Elf64_Phdr)))
 		return (ERR_INVALID_PHDR);
 	phentsize = ehdr->e_phentsize;
 	if (phentsize == 0)

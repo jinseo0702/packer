@@ -131,9 +131,9 @@ static uint64_t	calc_required_size(uint8_t elf_class, size_t n)
 	uint64_t	sc_len;
 
 	if (elf_class == ELFCLASS32)
-		sc_len = 352;
+		sc_len = get_shellcode_size(elf_class);
 	else
-		sc_len = 496;
+		sc_len = get_shellcode_size(elf_class);
 	return (sc_len + 16 + 32 + (uint64_t)(n * 24));
 }
 
@@ -166,6 +166,8 @@ static int	find_stub_segment(const t_unit *unit,
 		avail = ((p_memsz + 4095) & ~((uint64_t)0xfff)) - p_filesz;
 		if ((flags & (PF_R | PF_X)) == (PF_R | PF_X) && avail >= required)
 		{
+			if(p_filesz > p_memsz)
+				return (ERR_RANGE);
 			enc[i].in_stub = 1;
 			*stub_index = i;
 			return (OK);

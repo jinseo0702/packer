@@ -133,8 +133,11 @@ int		collect_encryption_segments(const t_unit *unit,
 			size_t *count, size_t *stub_index);
 int		encrypt_segment(unsigned char *base, uint64_t limit,
 			const t_encryption *enc, uint64_t key);
+int		encrypt_segment_32(unsigned char *base, uint64_t limit,
+			const t_encryption *enc, uint64_t key);
 int		get_shellcode(uint8_t elf_class,
 			const uint8_t **code, size_t *len);
+uint64_t	get_shellcode_size(uint8_t elf_class);
 int		prepare_payload(uint8_t **payload, size_t *payload_size,
 			const t_unit *unit, const t_encryption *stub_enc,
 			const t_meta *meta_array, size_t meta_count,

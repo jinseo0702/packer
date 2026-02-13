@@ -181,3 +181,8 @@ r 만 들어 있는 상태를 확실하게 검사하기 위해서는 어떤 방�
 ➜  packer git:(main) ✗ sdiff <(objdump -D woody) <(objdump -D sample)
 ➜  packer git:(main) ✗
 ```
+
+32비트에서 연산이 다르게 될 경우를 대비
+int		encrypt_segment_32(unsigned char *base, uint64_t limit,
+			const t_encryption *enc, uint64_t key);
+만들기 완료

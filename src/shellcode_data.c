@@ -96,6 +96,13 @@ unsigned char shellcode_32_bin[] = {
   };
   unsigned int shellcode_64_bin_len = 592;
 
+uint64_t get_shellcode_size(uint8_t elf_class)
+{
+	if (elf_class == ELFCLASS32)
+		return sizeof(shellcode_32_bin);
+	else
+		return sizeof(shellcode_64_bin);
+}
 
 int	get_shellcode(uint8_t elf_class, const uint8_t **code, size_t *len)
 {
@@ -104,13 +111,13 @@ int	get_shellcode(uint8_t elf_class, const uint8_t **code, size_t *len)
 	if (elf_class == ELFCLASS32)
 	{
 		*code = shellcode_32_bin;
-		*len = (size_t)shellcode_32_bin_len;
+		*len = (size_t)get_shellcode_size(elf_class);
 		return (OK);
 	}
 	if (elf_class == ELFCLASS64)
 	{
 		*code = shellcode_64_bin;
-		*len = (size_t)shellcode_64_bin_len;
+		*len = (size_t)get_shellcode_size(elf_class);
 		return (OK);
 	}
 	return (ERR_INVALID_CLASS);
