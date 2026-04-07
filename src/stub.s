@@ -14,6 +14,7 @@ bits 64
 	%define CODE_SIZE   592
 	%define ORI_BASE    r10
 	%define META_ADD    r8
+	%define SYS_CALL    syscall
 %else
 bits 32
 	%define CTX_AX      eax
@@ -26,8 +27,9 @@ bits 32
 	%define CTX_BP      ebp
 	%define PTR_SIZE    0x4
 	%define CODE_SIZE   448
-	%define ORI_BASE    esi
+	%define ORI_BASE    ebx
 	%define META_ADD    edi
+	%define SYS_CALL    int 0x80
 %endif
 
 %ifdef ARCH_64
@@ -136,22 +138,24 @@ bits 32
 		pop CTX_DX
 		INIT_RESI CTX_AX
 		mov CTX_AX, 10
-		syscall
+		SYS_CALL
 		CHECK_ERROR
 	%endmacro
 %else
 	%macro USE_MPROTEC 2
 	bits 32
-		INIT_RESI CTX_BX
-		mov CTX_BX, %1
 		INIT_RESI CTX_CX
 		mov CTX_CX, %2
 		INIT_RESI CTX_DX
 		pop CTX_DX
+		push ORI_BASE
+		INIT_RESI CTX_BX
+		mov CTX_BX, %1
 		INIT_RESI CTX_AX
 		mov CTX_AX, 125
-		syscall
+		SYS_CALL
 		CHECK_ERROR
+		pop ORI_BASE
 	%endmacro
 %endif
 
@@ -162,30 +166,24 @@ bits 32
 %ifdef ARCH_64
 	%macro USE_WRITE 3
 	bits 64
-		INIT_RESI CTX_AX
-		INIT_RESI CTX_DI
-		INIT_RESI CTX_SI
-		INIT_RESI CTX_DX
 		mov CTX_DI, %1
 		mov CTX_SI, %2
 		mov CTX_DX, %3
 		mov CTX_AX, 1
-		syscall
+		SYS_CALL
 		CHECK_ERROR
 	%endmacro
 %else
 	%macro USE_WRITE 3
 	bits 32
-		INIT_RESI CTX_AX
-		INIT_RESI CTX_BX
-		INIT_RESI CTX_CX
-		INIT_RESI CTX_DX
+		push ORI_BASE
 		mov CTX_BX, %1
 		mov CTX_CX, %2
 		mov CTX_DX, %3
 		mov CTX_AX, 0x4
-		syscall
+		SYS_CALL
 		CHECK_ERROR
+		pop ORI_BASE
 	%endmacro
 %endif
 
@@ -201,7 +199,7 @@ bits 32
 		neg CTX_AX
 		mov CTX_DI, CTX_AX
 		mov CTX_AX, 0x3C
-		syscall
+		SYS_CALL
 	%%done:
 	%endmacro
 %else
@@ -215,7 +213,7 @@ bits 32
 		neg CTX_AX
 		mov CTX_BX, CTX_AX
 		mov CTX_AX, 0x1
-		syscall
+		SYS_CALL
 	%%done:
 	%endmacro
 %endif
@@ -252,6 +250,7 @@ bits 32
 ; %1 decoding start address
 ; %2 endsize
 %macro DECODING_DATA 2
+	push ORI_BASE
     INIT_RESI CTX_CX
     GET_DATA_VALUE CTX_BX, CTX_AX, 0x4 ; CTX_BX = key
 	%%_loop_qword:
@@ -273,18 +272,20 @@ bits 32
 	    inc CTX_CX
 	    jmp %%_remaining
 	%%_done:
+	pop ORI_BASE
 %endmacro
 _stub:
 	INIT_RESI CTX_BP
 	FIND_DATA_INDEX CTX_CX, 0x3, 0x8
-	FIND_OFFSET ORI_BASE, 0
-	sub ORI_BASE, [CTX_CX]
+	FIND_OFFSET CTX_SI, 0
+	sub CTX_SI, [CTX_CX]
 	FIND_DATA_INDEX CTX_CX, 0x2, 0x8
 	INIT_RESI CTX_AX
 	mov CTX_AX, [CTX_CX]
-	add CTX_AX, ORI_BASE
+	add CTX_AX, CTX_SI
 	push CTX_AX
 	PUSH_ALL_REGISTER
+	mov ORI_BASE, CTX_SI ; ORI_BASE = base
 
 _loop:
 	GET_DATA_VALUE CTX_AX, CTX_DI, 0x5
