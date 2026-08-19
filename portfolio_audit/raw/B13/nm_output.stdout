@@ -1,0 +1,24 @@
+_IO_stdin_used R 402000 4
+__TMC_END__ D 404030 
+__bss_start B 40402c 
+__data_start D 404008 
+__dso_handle D 404010 
+__gmon_start__ w         
+__libc_start_main@GLIBC_2.34 U         
+_dl_relocate_static_pie T 401080 5
+_edata D 40402c 
+_end B 404038 
+_fini T 40121c 
+_init T 401000 
+_start T 401050 26
+absolute_symbol A 1234 
+data_start W 404008 
+global_bss_symbol B 404030 4
+global_data_symbol D 404018 4
+global_rodata_symbol R 402004 4
+global_text_symbol T 401176 40
+main T 4011b6 66
+printf@GLIBC_2.2.5 U         
+scope_global_value D 404020 4
+weak_defined_data V 404028 4
+weak_defined_function W 40115e 18

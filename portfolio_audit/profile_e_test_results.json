@@ -1,0 +1,455 @@
+{
+  "profile": "PROFILE E extension",
+  "target_sha256": "cba63f4bed7a296c38a5f59c46419e330d6769564ba5dd685ffad5cf4ebda5ad",
+  "fixture_count": 8,
+  "case_count": 22,
+  "counts": {
+    "PASS": 21,
+    "PARTIAL": 0,
+    "FAIL": 0,
+    "CRASH": 1,
+    "SETUP_FAILURE": 0
+  },
+  "normalization": [
+    "same synthetic argv[0]",
+    "remove exactly one leading 14-byte WOODY marker from packed stdout"
+  ],
+  "setup_failures": {},
+  "results": [
+    {
+      "id": "E01",
+      "title": "ELF64 ET_EXEC default behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "bf4ab398655c0cfdef61458340a1185580c627b8815ddc14f1aff491fed4a6ef",
+        "packed_stdout_sha256": "94ffd18b58593125243cc63e362e2689d46de57ae121515a92deddd61d8ecbe1",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E02",
+      "title": "ELF64 PIE default behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "bf4ab398655c0cfdef61458340a1185580c627b8815ddc14f1aff491fed4a6ef",
+        "packed_stdout_sha256": "94ffd18b58593125243cc63e362e2689d46de57ae121515a92deddd61d8ecbe1",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "d04544dcbd2935f47ca1daa1025aab072dc06bd0af90f7c7b53220ca4380f8a7",
+        "input_hash_after": "d04544dcbd2935f47ca1daa1025aab072dc06bd0af90f7c7b53220ca4380f8a7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E03",
+      "title": "ELF64 static syscall behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 5,
+        "packed_returncode": 5,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "1d397aeabf126786357d4c6f1adcc6f54540b39b117c550bb0212f0d4091dfb0",
+        "packed_stdout_sha256": "9c90078864c57f6fe74c2c2eac56916f1899941dc39889f4b70dead482fa9a8c",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "3d3c97a063ee034d25dd840fec516211f83920fb664161401c2eac1241de0967",
+        "input_hash_after": "3d3c97a063ee034d25dd840fec516211f83920fb664161401c2eac1241de0967",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E04",
+      "title": "ELF32 static syscall behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 6,
+        "packed_returncode": 6,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "fb3ce966d202f11c971d6e404cf0a438278b47baec49e99de2b1e555222088bb",
+        "packed_stdout_sha256": "caab10b776f7053fe2250ff9115c172b6a66220d5c40c1244642906ee944aff6",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "d8bb98c2f39e35f926677777ef0f78dd35adf7de58b00bc00472d94e4fc01f17",
+        "input_hash_after": "d8bb98c2f39e35f926677777ef0f78dd35adf7de58b00bc00472d94e4fc01f17",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E05",
+      "title": "ELF32 PIE tracked hello behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "d2a84f4b8b650937ec8f73cd8be2c74add5a911ba64df27458ed8229da804a26",
+        "packed_stdout_sha256": "0ece2abd84a180e2876486c7eec729b1bbaa4ef21e20728f06c4f7d6cdfdfbb0",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "17f32f1c38e399dc411daf0072d409c916b7cde56094d5f5dfc9c2143a10a49e",
+        "input_hash_after": "17f32f1c38e399dc411daf0072d409c916b7cde56094d5f5dfc9c2143a10a49e",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E06",
+      "title": "stripped ELF64 behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "bf4ab398655c0cfdef61458340a1185580c627b8815ddc14f1aff491fed4a6ef",
+        "packed_stdout_sha256": "94ffd18b58593125243cc63e362e2689d46de57ae121515a92deddd61d8ecbe1",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "2c5cc6aa9d063a23f5fa929691d58697608d23c12dfda643238b5ee739257588",
+        "input_hash_after": "2c5cc6aa9d063a23f5fa929691d58697608d23c12dfda643238b5ee739257588",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E07",
+      "title": "argument preservation",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "55825dea210f892185bfae58d4f7c78cb63129242ededbc6477cc7366c06ce4e",
+        "packed_stdout_sha256": "88956a3b2340165e21fd616bd21898b83e9225a03ad62afb91f122db2cc6c277",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E08",
+      "title": "stdout preservation",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "b23403e6d6ce3dd0764ff6c3bcd606b30ef2b2d9ff3ee3132fffccda631779f3",
+        "packed_stdout_sha256": "4413e944c8b4dfacddfa474bec223f292fa5b017332fd62c5003aa7b5713568d",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E09",
+      "title": "stderr preservation",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stdout_sha256": "bc3dcdd6dac3667c0592d7ff6b6be37adcd000cbe291f5c1055630fe9019c34c",
+        "original_stderr_sha256": "751341c57bae19d7882b8e439f71560254c2177b5680ef1601fb7cb8192a7753",
+        "packed_stderr_sha256": "751341c57bae19d7882b8e439f71560254c2177b5680ef1601fb7cb8192a7753",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E10",
+      "title": "exit status preservation",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 7,
+        "packed_returncode": 7,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stdout_sha256": "bc3dcdd6dac3667c0592d7ff6b6be37adcd000cbe291f5c1055630fe9019c34c",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E11",
+      "title": "binary stdin preservation",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "bab90e2022417b0d134a68b31bd8ce3d95ab80598b51e0fcf700533f0f42cbc3",
+        "packed_stdout_sha256": "04dff6f33688992bfafa2bc7e889140e558cc9a1ab4f7d9917b0578334bcc7cc",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E12",
+      "title": "environment-derived behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "f6768211424709888a29ba1759021743df4ced1f4375ba0be9afdd14e170a9c5",
+        "packed_stdout_sha256": "8683f7d2a55bc7389309bad18fb25141cb8b4251f3f2c72635c957890e730177",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E13",
+      "title": "all-zero explicit key behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "bf4ab398655c0cfdef61458340a1185580c627b8815ddc14f1aff491fed4a6ef",
+        "packed_stdout_sha256": "94ffd18b58593125243cc63e362e2689d46de57ae121515a92deddd61d8ecbe1",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E14",
+      "title": "all-one explicit key behavior",
+      "kind": "behavior",
+      "classification": "PASS",
+      "reason": "stdout/stderr/exit status matched after one marker normalization",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": 0,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "bf4ab398655c0cfdef61458340a1185580c627b8815ddc14f1aff491fed4a6ef",
+        "packed_stdout_sha256": "94ffd18b58593125243cc63e362e2689d46de57ae121515a92deddd61d8ecbe1",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "input_hash_before": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "input_hash_after": "4a60b4ca68fcd0b9263b4ec59566cc3932cd333b0e6636da3694d0e17d28efe7",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E15",
+      "title": "shared object loaded through dlopen",
+      "kind": "behavior",
+      "classification": "CRASH",
+      "reason": "packed program terminated by signal 4",
+      "details": {
+        "original_returncode": 0,
+        "packed_returncode": -4,
+        "original_timed_out": false,
+        "packed_timed_out": false,
+        "original_stdout_sha256": "e1b44af2b20d05b8f01d486620f5e12f355df146085d6c4e6f9c0a5a5074e874",
+        "packed_stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "packed_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "structure_ok": true
+      }
+    },
+    {
+      "id": "E16",
+      "title": "ELF64 header and PHDR delta",
+      "kind": "structural",
+      "classification": "PASS",
+      "reason": "ELF header/PHDR delta matched",
+      "details": {
+        "structure_ok": true,
+        "checks": {
+          "header_preserved": true,
+          "entry_correct": true,
+          "phdr_delta_correct": true,
+          "load_invariants": true,
+          "xor_ranges_correct": true,
+          "payload_shellcode_correct": true,
+          "payload_marker_correct": true,
+          "payload_metadata_correct": true,
+          "no_unexpected_byte_changes": true
+        }
+      }
+    },
+    {
+      "id": "E17",
+      "title": "ELF32 header and PHDR delta",
+      "kind": "structural",
+      "classification": "PASS",
+      "reason": "ELF header/PHDR delta matched",
+      "details": {
+        "structure_ok": true,
+        "checks": {
+          "header_preserved": true,
+          "entry_correct": true,
+          "phdr_delta_correct": true,
+          "load_invariants": true,
+          "xor_ranges_correct": true,
+          "payload_shellcode_correct": true,
+          "payload_marker_correct": true,
+          "payload_metadata_correct": true,
+          "no_unexpected_byte_changes": true
+        }
+      }
+    },
+    {
+      "id": "E18",
+      "title": "XOR ranges and byte-delta allowlist",
+      "kind": "structural",
+      "classification": "PASS",
+      "reason": "encrypted ranges and global byte-delta allowlist matched",
+      "details": {
+        "structure_ok": true,
+        "checks": {
+          "header_preserved": true,
+          "entry_correct": true,
+          "phdr_delta_correct": true,
+          "load_invariants": true,
+          "xor_ranges_correct": true,
+          "payload_shellcode_correct": true,
+          "payload_marker_correct": true,
+          "payload_metadata_correct": true,
+          "no_unexpected_byte_changes": true
+        }
+      }
+    },
+    {
+      "id": "E19",
+      "title": "payload shellcode and metadata",
+      "kind": "structural",
+      "classification": "PASS",
+      "reason": "payload shellcode/marker/metadata matched",
+      "details": {
+        "structure_ok": true,
+        "checks": {
+          "header_preserved": true,
+          "entry_correct": true,
+          "phdr_delta_correct": true,
+          "load_invariants": true,
+          "xor_ranges_correct": true,
+          "payload_shellcode_correct": true,
+          "payload_marker_correct": true,
+          "payload_metadata_correct": true,
+          "no_unexpected_byte_changes": true
+        }
+      }
+    },
+    {
+      "id": "E20",
+      "title": "same input and key produce identical output",
+      "kind": "determinism",
+      "classification": "PASS",
+      "reason": "output hashes matched",
+      "details": {
+        "first_sha256": "b0fda33c453d4c6daef15dc5bcab843d238eae2f9c3f43aeaef4ce8904c7f9cf",
+        "second_sha256": "b0fda33c453d4c6daef15dc5bcab843d238eae2f9c3f43aeaef4ce8904c7f9cf"
+      }
+    },
+    {
+      "id": "E21",
+      "title": "original input integrity",
+      "kind": "structural",
+      "classification": "PASS",
+      "reason": "input hash unchanged",
+      "details": {
+        "structure_ok": true,
+        "checks": {
+          "header_preserved": true,
+          "entry_correct": true,
+          "phdr_delta_correct": true,
+          "load_invariants": true,
+          "xor_ranges_correct": true,
+          "payload_shellcode_correct": true,
+          "payload_marker_correct": true,
+          "payload_metadata_correct": true,
+          "no_unexpected_byte_changes": true
+        }
+      }
+    },
+    {
+      "id": "E22",
+      "title": "output executable mode and ELF identity",
+      "kind": "structural",
+      "classification": "PASS",
+      "reason": "output executable mode 755 and ELF identity preserved",
+      "details": {
+        "structure_ok": true,
+        "checks": {
+          "header_preserved": true,
+          "entry_correct": true,
+          "phdr_delta_correct": true,
+          "load_invariants": true,
+          "xor_ranges_correct": true,
+          "payload_shellcode_correct": true,
+          "payload_marker_correct": true,
+          "payload_metadata_correct": true,
+          "no_unexpected_byte_changes": true
+        }
+      }
+    }
+  ]
+}

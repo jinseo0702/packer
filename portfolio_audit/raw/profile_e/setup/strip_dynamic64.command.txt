@@ -1,0 +1,1 @@
+strip --strip-all /home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_stripped64

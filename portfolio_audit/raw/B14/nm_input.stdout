@@ -1,0 +1,25 @@
+_DYNAMIC d 3e38 
+_GLOBAL_OFFSET_TABLE_ d 3fe8 
+_ITM_deregisterTMCloneTable w         
+_ITM_registerTMCloneTable w         
+__FRAME_END__ r 2110 
+__GNU_EH_FRAME_HDR r 2000 
+__TMC_END__ d 4018 
+__cxa_finalize w         
+__do_global_dtors_aux t 10e0 
+__do_global_dtors_aux_fini_array_entry d 3e30 
+__dso_handle d 4008 
+__frame_dummy_init_array_entry d 3e28 
+__gmon_start__ w         
+_fini t 11a4 
+_init t 1000 
+completed.0 b 4018 1
+deregister_tm_clones t 1070 
+frame_dummy t 1120 
+register_tm_clones t 10a0 
+shared_exported_data D 4010 4
+shared_exported_function T 115c 47
+shared_hidden_function t 1129 18
+shared_local_data d 4014 4
+shared_weak_function W 1141 1b
+shared_weak_undefined_function w         

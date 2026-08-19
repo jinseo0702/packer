@@ -1,0 +1,13 @@
+{
+  "fixtures": {
+    "dynamic_exec64": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_exec64",
+    "dynamic_pie64": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_pie64",
+    "stripped64": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_stripped64",
+    "static64": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_static64",
+    "static32": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_static32",
+    "pie32": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/hello32_pie",
+    "shared64": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/libshared_profile_e.so",
+    "loader64": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/shared_loader64"
+  },
+  "failures": {}
+}

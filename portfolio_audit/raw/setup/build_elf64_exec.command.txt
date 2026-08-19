@@ -1,0 +1,1 @@
+gcc -O0 -fno-inline -fno-pie -no-pie -Wl,--build-id=none -o /home/jinseo/duo/packer/portfolio_audit/tests/generated/elf64_exec /home/jinseo/duo/packer/portfolio_audit/tests/fixtures/symbol_fixture.c

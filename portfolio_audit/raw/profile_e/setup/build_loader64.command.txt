@@ -1,0 +1,1 @@
+gcc -O0 -fPIE -pie -Wl,--build-id=none -o /home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/shared_loader64 /home/jinseo/duo/packer/portfolio_audit/tests/fixtures/shared_loader.c -ldl

@@ -1,0 +1,28 @@
+make: Entering directory '/tmp/packer-audit-build.8e6Voq'
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/woody-packer.c -o src/woody-packer.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/error.c -o src/error.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/arg.c -o src/arg.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/io_unit.c -o src/io_unit.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/format_router.c -o src/format_router.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/elf_parser.c -o src/elf_parser.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/check_meta.c -o src/check_meta.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/encryption_xor.c -o src/encryption_xor.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/shellcode_data.c -o src/shellcode_data.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/enter_data.c -o src/enter_data.o
+gcc -Wall -Wextra -Werror -Wno-unused-parameter -Iinclude -Ilibft -Ift_printf -c src/write_output.c -o src/write_output.o
+make -C libft
+make[1]: Entering directory '/tmp/packer-audit-build.8e6Voq/libft'
+make[1]: Leaving directory '/tmp/packer-audit-build.8e6Voq/libft'
+make -C ft_printf
+make[1]: Entering directory '/tmp/packer-audit-build.8e6Voq/ft_printf'
+gcc -g -Wall -Wextra -Werror  -c ft_memset.c -o ft_memset.o
+gcc -g -Wall -Wextra -Werror  -c ft_fprintf.c -o ft_fprintf.o
+gcc -g -Wall -Wextra -Werror  -c ft_printf.c -o ft_printf.o
+gcc -g -Wall -Wextra -Werror  -c ft_putchar.c -o ft_putchar.o
+gcc -g -Wall -Wextra -Werror  -c ft_putstr.c -o ft_putstr.o
+gcc -g -Wall -Wextra -Werror  -c ft_putaddress.c -o ft_putaddress.o
+gcc -g -Wall -Wextra -Werror  -c ft_putnbr.c -o ft_putnbr.o
+ar -rcs libftprintf.a ft_memset.o ft_fprintf.o ft_printf.o ft_putchar.o ft_putstr.o ft_putaddress.o ft_putnbr.o
+make[1]: Leaving directory '/tmp/packer-audit-build.8e6Voq/ft_printf'
+gcc -o woody_woodpacker src/woody-packer.o src/error.o src/arg.o src/io_unit.o src/format_router.o src/elf_parser.o src/check_meta.o src/encryption_xor.o src/shellcode_data.o src/enter_data.o src/write_output.o libft/libft.a ft_printf/libftprintf.a
+make: Leaving directory '/tmp/packer-audit-build.8e6Voq'

@@ -1,0 +1,1 @@
+gcc -nostdlib -static -fno-pie -no-pie -Wl,--build-id=none -o /home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_static64 /home/jinseo/duo/packer/portfolio_audit/tests/fixtures/behavior_static64.s

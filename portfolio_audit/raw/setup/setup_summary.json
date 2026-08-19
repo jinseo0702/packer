@@ -1,0 +1,20 @@
+{
+  "fixtures": {
+    "elf64_exec": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/elf64_exec",
+    "elf64_pie": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/elf64_pie",
+    "elf32_exec": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/elf32_exec",
+    "elf32_pie": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/elf32_pie_hello",
+    "stripped64": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/stripped64",
+    "shared64": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/libshared_fixture.so",
+    "rel64": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/symbol_fixture.o",
+    "archive": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/libfixture.a",
+    "not_elf": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/not_elf.txt",
+    "truncated": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/truncated_elf",
+    "bad_class": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/bad_class",
+    "bad_endian": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/bad_endian",
+    "bad_machine": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/bad_machine",
+    "bad_phdr": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/bad_phdr",
+    "no_stub": "/home/jinseo/duo/packer/portfolio_audit/tests/generated/no_stub"
+  },
+  "failures": {}
+}

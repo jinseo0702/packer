@@ -1,0 +1,6 @@
+{
+  "executable": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/behavior_static32",
+  "argv": [
+    "profile_e_program"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "executable": "/home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/shared_loader64",
+  "argv": [
+    "profile_e_program",
+    "/home/jinseo/duo/packer/portfolio_audit/raw/profile_e/E15/pack/woody"
+  ]
+}

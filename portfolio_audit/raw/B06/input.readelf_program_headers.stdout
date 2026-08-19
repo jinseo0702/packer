@@ -1,0 +1,33 @@
+
+Elf file type is DYN (Position-Independent Executable file)
+Entry point 0x1070
+There are 11 program headers, starting at offset 52
+
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  PHDR           0x000034 0x00000034 0x00000034 0x00160 0x00160 R   0x4
+  INTERP         0x000194 0x00000194 0x00000194 0x00013 0x00013 R   0x1
+      [Requesting program interpreter: /lib/ld-linux.so.2]
+  LOAD           0x000000 0x00000000 0x00000000 0x003d4 0x003d4 R   0x1000
+  LOAD           0x001000 0x00001000 0x00001000 0x001f8 0x001f8 R E 0x1000
+  LOAD           0x002000 0x00002000 0x00002000 0x000f8 0x000f8 R   0x1000
+  LOAD           0x002ed8 0x00003ed8 0x00003ed8 0x00130 0x00134 RW  0x1000
+  DYNAMIC        0x002ee0 0x00003ee0 0x00003ee0 0x000f8 0x000f8 RW  0x4
+  NOTE           0x0001a8 0x000001a8 0x000001a8 0x00044 0x00044 R   0x4
+  GNU_EH_FRAME   0x002014 0x00002014 0x00002014 0x00034 0x00034 R   0x4
+  GNU_STACK      0x000000 0x00000000 0x00000000 0x00000 0x00000 RW  0x10
+  GNU_RELRO      0x002ed8 0x00003ed8 0x00003ed8 0x00128 0x00128 R   0x1
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     
+   01     .interp 
+   02     .interp .note.gnu.build-id .note.ABI-tag .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt 
+   03     .init .plt .plt.got .text .fini 
+   04     .rodata .eh_frame_hdr .eh_frame 
+   05     .init_array .fini_array .dynamic .got .data .bss 
+   06     .dynamic 
+   07     .note.gnu.build-id .note.ABI-tag 
+   08     .eh_frame_hdr 
+   09     
+   10     .init_array .fini_array .dynamic .got 

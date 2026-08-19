@@ -1,0 +1,26 @@
+{
+  "checks": 5,
+  "detected": 5,
+  "results": [
+    {
+      "name": "missing symbol record",
+      "detected": true
+    },
+    {
+      "name": "wrong symbol type",
+      "detected": true
+    },
+    {
+      "name": "wrong symbol value",
+      "detected": true
+    },
+    {
+      "name": "wrong symbol ordering",
+      "detected": true
+    },
+    {
+      "name": "unexpected success/output in rejection case",
+      "detected": true
+    }
+  ]
+}

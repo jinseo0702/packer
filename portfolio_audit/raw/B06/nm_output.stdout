@@ -1,0 +1,34 @@
+_DYNAMIC d 3ee0 
+_GLOBAL_OFFSET_TABLE_ d 3fd8 
+_IO_stdin_used R 2004 4
+_ITM_deregisterTMCloneTable w         
+_ITM_registerTMCloneTable w         
+__FRAME_END__ r 20f4 
+__GNU_EH_FRAME_HDR r 2014 
+__TMC_END__ D 4008 
+__abi_tag r 1cc 20
+__bss_start B 4008 
+__cxa_finalize@GLIBC_2.1.3 w         
+__data_start D 4000 
+__do_global_dtors_aux t 1140 
+__do_global_dtors_aux_fini_array_entry d 3edc 
+__dso_handle D 4004 
+__frame_dummy_init_array_entry d 3ed8 
+__gmon_start__ w         
+__libc_start_main@GLIBC_2.34 U         
+__x86.get_pc_thunk.ax T 11d9 
+__x86.get_pc_thunk.bx T 10a0 4
+__x86.get_pc_thunk.dx T 1199 
+_edata D 4008 
+_end B 400c 
+_fini T 11e0 
+_fp_hw R 2000 4
+_init T 1000 
+_start T 1070 30
+completed.0 b 4008 1
+data_start W 4000 
+deregister_tm_clones t 10b0 
+frame_dummy t 1190 
+main T 119d 3c
+puts@GLIBC_2.0 U         
+register_tm_clones t 10f0 

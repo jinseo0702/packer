@@ -1,0 +1,1 @@
+/home/jinseo/duo/packer/portfolio_audit/bin/woody_woodpacker /home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/libshared_profile_e.so 0123456789abcdef

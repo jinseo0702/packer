@@ -1,0 +1,1 @@
+gcc -O0 -shared -fPIC -Wl,--build-id=none -o /home/jinseo/duo/packer/portfolio_audit/tests/profile_e_generated/libshared_profile_e.so /home/jinseo/duo/packer/portfolio_audit/tests/fixtures/shared_fixture.c

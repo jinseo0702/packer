@@ -1,0 +1,10 @@
+{
+  "executable": "/home/jinseo/duo/packer/portfolio_audit/raw/profile_e/E07/pack/woody",
+  "argv": [
+    "profile_e_program",
+    "argv",
+    "alpha",
+    "two words",
+    ""
+  ]
+}

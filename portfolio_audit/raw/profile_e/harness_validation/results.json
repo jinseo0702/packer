@@ -1,0 +1,26 @@
+{
+  "checks": 5,
+  "detected": 5,
+  "results": [
+    {
+      "name": "wrong exit status",
+      "detected": true
+    },
+    {
+      "name": "extra stdout after marker",
+      "detected": true
+    },
+    {
+      "name": "missing marker",
+      "detected": true
+    },
+    {
+      "name": "unexpected ELF-header byte delta",
+      "detected": true
+    },
+    {
+      "name": "corrupt payload key metadata",
+      "detected": true
+    }
+  ]
+}

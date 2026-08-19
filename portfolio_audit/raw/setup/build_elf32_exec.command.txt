@@ -1,0 +1,1 @@
+gcc -m32 -nostdlib -fno-pie -no-pie -Wl,--build-id=none -o /home/jinseo/duo/packer/portfolio_audit/tests/generated/elf32_exec /home/jinseo/duo/packer/portfolio_audit/tests/fixtures/symbol_fixture32.s

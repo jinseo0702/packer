@@ -1,0 +1,1 @@
+ar rcs /home/jinseo/duo/packer/portfolio_audit/tests/generated/libfixture.a /home/jinseo/duo/packer/portfolio_audit/tests/generated/symbol_fixture.o

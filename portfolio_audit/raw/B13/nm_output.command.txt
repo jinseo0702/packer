@@ -1,0 +1,1 @@
+nm -g --format=posix /home/jinseo/duo/packer/portfolio_audit/raw/B13/work/woody

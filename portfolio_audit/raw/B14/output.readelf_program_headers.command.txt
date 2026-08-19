@@ -1,0 +1,1 @@
+readelf -lW /home/jinseo/duo/packer/portfolio_audit/raw/B14/work/woody

@@ -1,0 +1,42 @@
+{
+  "ok": true,
+  "checks": {
+    "header_preserved": true,
+    "entry_correct": true,
+    "phdr_delta_correct": true,
+    "load_invariants": true,
+    "xor_ranges_correct": true,
+    "payload_shellcode_correct": true,
+    "payload_marker_correct": true,
+    "payload_metadata_correct": true,
+    "no_unexpected_byte_changes": true
+  },
+  "class": 2,
+  "eligible_segment_count": 2,
+  "stub_phdr_index": 1,
+  "payload_offset": 4142,
+  "payload_size": 688,
+  "shellcode_size": 592,
+  "original_entry": 4198400,
+  "new_entry": 4198446,
+  "unexpected_change_count": 0,
+  "unexpected_change_offsets": [],
+  "metadata": {
+    "real_entry": 4198400,
+    "new_entry": 4198446,
+    "key": 81985529216486895,
+    "count": 2,
+    "records": [
+      [
+        4198400,
+        46,
+        5
+      ],
+      [
+        4202496,
+        12,
+        1
+      ]
+    ]
+  }
+}

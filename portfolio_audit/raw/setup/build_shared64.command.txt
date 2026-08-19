@@ -1,0 +1,1 @@
+gcc -O0 -fno-inline -shared -fPIC -Wl,--build-id=none -o /home/jinseo/duo/packer/portfolio_audit/tests/generated/libshared_fixture.so /home/jinseo/duo/packer/portfolio_audit/tests/fixtures/shared_fixture.c

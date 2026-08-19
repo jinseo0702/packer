@@ -1,0 +1,10 @@
+__bss_start B 804b008 
+_edata D 804b008 
+_end B 804b00c 
+_start T 8049000 
+global_bss32 B 804b008 4
+global_data32 D 804b004 
+global_rodata32 R 804a000 
+global_text32 T 804900e 
+local_text32 t 8049014 
+weak_defined32 W 8049015 

@@ -1,0 +1,40 @@
+_DYNAMIC d 403e08 
+_GLOBAL_OFFSET_TABLE_ d 403fe8 
+_IO_stdin_used R 402000 4
+__FRAME_END__ r 402170 
+__GNU_EH_FRAME_HDR r 402020 
+__TMC_END__ D 404030 
+__abi_tag r 4021a8 20
+__bss_start B 40402c 
+__data_start D 404008 
+__do_global_dtors_aux t 401100 
+__do_global_dtors_aux_fini_array_entry d 403e00 
+__dso_handle D 404010 
+__frame_dummy_init_array_entry d 403df8 
+__gmon_start__ w         
+__libc_start_main@GLIBC_2.34 U         
+_dl_relocate_static_pie T 401080 5
+_edata D 40402c 
+_end B 404038 
+_fini T 40121c 
+_init T 401000 
+_start T 401050 26
+absolute_symbol A 1234 
+completed.0 b 40402c 1
+data_start W 404008 
+deregister_tm_clones t 401090 
+frame_dummy t 401130 
+global_bss_symbol B 404030 4
+global_data_symbol D 404018 4
+global_rodata_symbol R 402004 4
+global_text_symbol T 401176 40
+local_bss_symbol b 404034 4
+local_data_symbol d 40401c 4
+local_text_symbol t 401136 28
+main T 4011b6 66
+printf@GLIBC_2.2.5 U         
+register_tm_clones t 4010c0 
+scope_global_value D 404020 4
+scope_local_value d 404024 4
+weak_defined_data V 404028 4
+weak_defined_function W 40115e 18

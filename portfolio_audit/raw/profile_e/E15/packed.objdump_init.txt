@@ -1,0 +1,19 @@
+
+portfolio_audit/raw/profile_e/E15/pack/woody:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+0000000000001000 <_init>:
+    1000:	1c c2                	sbb    $0xc2,%al
+    1002:	b5 73                	mov    $0x73,%ch
+    1004:	2f                   	(bad)
+    1005:	c6                   	(bad)
+    1006:	cf                   	iret
+    1007:	09 a7 46 ae 58 48    	or     %esp,0x4858ae46(%rdi)
+    100d:	45 23 49 6a          	and    0x6a(%r9),%r9d
+    1011:	0d df 8b 98 95       	or     $0x95988bdf,%eax
+    1016:	6b                   	.byte 0x6b
+    1017:	82                   	(bad)
+    1018:	2b c5                	sub    %ebp,%eax
+    101a:	68                   	.byte 0x68

@@ -1,0 +1,1 @@
+nm --format=posix /home/jinseo/duo/packer/portfolio_audit/tests/generated/elf64_pie
