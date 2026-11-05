@@ -489,21 +489,19 @@ def shared_object_case(fixtures: dict[str, Path], failures: dict[str, str]) -> d
 		if fixture_name in failures:
 			return {**base, "classification": "SETUP_FAILURE", "reason": failures[fixture_name]}
 	shared = fixtures["shared64"]
-	result, output, _before, _after = run_packer(case_dir, shared, FIXED_KEY)
-	failure = pack_failure(result, output)
-	if failure:
-		return {**base, "classification": failure[0], "reason": failure[1]}
-	structure = analyze_structure(shared, output, FIXED_KEY)
-	(case_dir / "structure.json").write_text(json.dumps(structure, indent=2), encoding="utf-8")
 	run_dir = case_dir / "execution"
 	run_dir.mkdir()
 	original = run_program(fixtures["loader64"], [str(shared)], b"", run_dir)
-	packed = run_program(fixtures["loader64"], [str(output)], b"", run_dir)
 	write_program_run(case_dir, "original_loader", original)
-	write_program_run(case_dir, "packed_loader", packed)
-	classification, reason, details = compare_behavior(original, packed, marker_required=False)
-	details["structure_ok"] = structure.get("ok", False)
-	return {**base, "classification": classification, "reason": reason, "details": details}
+	if original["returncode"] != 0 or original["stdout"] != b"shared-result:78\n":
+		return {**base, "classification": "SETUP_FAILURE", "reason": "original shared object failed to load"}
+	result, output, before, after = run_packer(case_dir, shared, FIXED_KEY)
+	if result["timed_out"] or result["returncode"] < 0:
+		return {**base, "classification": "CRASH", "reason": "packer crashed or timed out"}
+	if (result["returncode"] == 0 or "ET_DYN input must be a PIE executable" not in result["stderr"]
+			or output.exists() or before != after):
+		return {**base, "classification": "FAIL", "reason": "expected a clean rejection of the shared object"}
+	return {**base, "classification": "PASS", "reason": "loadable shared object rejected before transformation"}
 
 
 def structural_case(spec: dict[str, Any], fixtures: dict[str, Path], failures: dict[str, str]) -> dict[str, Any]:
