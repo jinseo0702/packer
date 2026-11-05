@@ -1,110 +1,54 @@
-# woody_woodpacker
+# Linux ELF 실행 파일 패커
 
-ELF 실행 파일이 loader를 거쳐 프로세스로 올라가는 과정을 이해하기 위해 만든
-학습용 binary transformer입니다. little-endian ELF32/i386와 ELF64/x86-64의
-선택된 `PT_LOAD` 영역을 XOR 변환하고, 실행 시 원래 내용을 복원한 뒤 기존
-entry point로 돌아가는 `woody`를 생성합니다.
+Linux는 ELF 파일의 어느 부분을 메모리에 올리고 어디서 실행을 시작할까? 이 프로젝트는 그 두 지점을 직접 바꿔 보는 C·어셈블리 도구다. `woody_woodpacker`는 실행 파일에서 선택한 영역을 XOR로 변환하고 시작 주소를 복원 코드로 바꿔 `woody`를 만든다. `woody`를 실행하면 복원 코드가 메모리에서 변환을 되돌리고, 표시 한 줄을 쓴 뒤 원래 프로그램에 제어를 넘긴다. 키는 결과 파일에도 들어가므로 용도는 실행 구조 실험에 한정된다.
 
-취약점 악용·전파·탐지 회피 기능을 구현한 프로젝트가 아니라, ELF layout과
-runtime loader 제약을 코드와 실행 결과로 확인하는 데 범위를 두었습니다.
+## 직접 실행해 보기
 
-## 만든 이유
-
-실행 파일의 일부를 바꾸었을 때 loader가 무엇을 근거로 mapping하고 제어권을
-넘기는지 직접 확인하고 싶었습니다. 변환 범위를 segment 단위로 제한한 것은
-section까지 다루며 복잡도를 넓히기보다 program header와 loader의 관계에
-집중하기 위한 선택이었습니다.
-
-## 핵심 기능
-
-- little-endian `ELFCLASS32`/`EM_386`, `ELFCLASS64`/`EM_X86_64` 처리
-- `ET_EXEC` 및 `DF_1_PIE` 표시가 있는 `ET_DYN` 실행 파일을 처리하고 program header 범위를 검증
-- file offset이 0이 아닌 `R`, `R|X`, `R|W|X` `PT_LOAD`의 file-backed bytes XOR 변환
-- decoder stub, 16-byte marker, 원래 entry, key, segment metadata 직렬화
-- 실행 가능한 기존 segment의 page-tail에 payload 삽입
-- `e_entry`와 해당 segment의 `p_filesz`/`p_memsz` 수정
-- 명시한 64-bit key 또는 `/dev/urandom`으로 생성한 key 사용
-- 입력은 read-only로 열고 `MAP_PRIVATE`에서 변환하여 원본을 보존
-
-## 동작 구조
-
-```text
-ELF 입력 + 선택적 key
-  -> header/PHDR 검증
-  -> 대상 PT_LOAD와 payload 공간 선택
-  -> segment XOR + decoder/metadata 삽입
-  -> e_entry와 PHDR 수정 -> ./woody
-  -> decoder 실행 -> mprotect/decode/권한 복원
-  -> "....WOODY...." 출력 -> original entry
-```
-
-핵심 조정은 `src/woody-packer.c`, 입력 검증은 `src/elf_parser.c`, segment 선택은
-`src/check_meta.c`, 출력 patch는 `src/write_output.c`가 담당합니다. runtime
-decoder는 ELF class별 byte array로 포함되며 metadata를 읽어 load base와 원래
-보호 속성을 복원합니다.
-
-## 설계하면서 고민한 점
-
-- section header나 symbol table에 의존하지 않고 program header만 사용했습니다.
-- 새 segment를 추가하지 않고 기존 RX segment의 page-tail을 사용해 ELF 구조
-  변경 범위를 줄였습니다. 그 대신 충분한 공간이 없는 layout은 처리할 수 없습니다.
-- runtime 변환이 끝날 때까지 loader가 새 entry stub을 먼저 실행한다는 전제를
-  두었습니다. 검증한 실행 파일에서는 동작했지만 일반 shared object에는 맞지 않습니다.
-- 원본 mapping을 직접 덮어쓰지 않고 별도 파일을 생성하도록 I/O 수명주기를
-  분리했습니다.
-
-## Build
+Ubuntu 22.04 x86-64(WSL2), GCC, GNU Make에서 확인했다. 저장소 루트에서 다음 예제를 실행한다. 결과 파일 이름은 항상 현재 디렉터리의 `woody`이며, 같은 이름의 파일이 있으면 덮어쓴다.
 
 ```sh
 make
+gcc -fPIE -pie HelloWorld.c -o demo-hello
+./woody_woodpacker ./demo-hello 0123456789abcdef
+./woody
 ```
 
-기본 target은 bundled `libft`와 `ft_printf`를 함께 빌드하고 루트에
-`woody_woodpacker`를 생성합니다. GNU/Linux와 GCC가 필요합니다.
+패커는 사용한 키를 출력한다. 마지막 명령의 첫 줄은 복원 코드가, 둘째 줄은 원래 프로그램이 쓴다.
 
-## Run
+```text
+....WOODY....
+Hello World
+```
+
+같은 입력과 키로 변환을 반복할 수 있다. 키를 지정할 때는 16자리 16진수를 사용하며 `0x` 접두사도 허용한다. 키를 생략하면 `/dev/urandom`에서 8바이트를 읽는다.
+
+## 파일에서 프로세스까지
+
+1. **입력을 검사한다.** 원본을 읽기 전용으로 열고 전용 메모리 매핑(`MAP_PRIVATE`)에서 작업한다. ELF 클래스, 바이트 순서, 대상 CPU, 프로그램 헤더 테이블을 검사한다. [입력 처리](src/io_unit.c) · [ELF 검사](src/elf_parser.c)
+2. **바꿀 바이트를 고른다.** 로더가 적재 단위로 쓰는 `PT_LOAD` 중 파일 오프셋이 0이 아니고 파일 바이트가 있는 R, RX, RWX 영역을 선택한다. 새 세그먼트를 추가하는 대신 읽기·실행 가능한 세그먼트의 끝에서 페이지 경계까지 남은 공간을 찾는다. 여기에 복원 코드와 메타데이터가 들어가야 한다. [영역 선택](src/check_meta.c)
+3. **새 시작 주소를 기록한다.** 선택 영역을 XOR로 바꾼 뒤 복원 코드, 키, 원래 시작 주소와 세그먼트 정보를 출력 파일에 쓴다. ELF의 시작 주소(`e_entry`)와 복원 코드가 들어갈 세그먼트의 크기도 갱신한다. [변환 흐름](src/woody-packer.c) · [출력 작성](src/write_output.c)
+4. **메모리에서 되돌린다.** 복원 코드는 실제 적재 주소를 계산하고, 쓰기 권한이 필요한 영역은 `mprotect`로 권한을 바꿔 복원한 뒤 원래 권한으로 되돌린다. 마지막으로 `....WOODY....`를 출력하고 원래 시작 주소로 돌아간다. [복원 코드](src/stub.s)
+
+## 공유 라이브러리를 거부하게 된 이유
+
+첫 구현은 위치 독립 실행 파일(PIE)과 공유 라이브러리가 모두 ELF 타입 `ET_DYN`이라는 점만 보고 둘 다 처리했다. 공유 라이브러리 예제는 변환된 헤더와 데이터가 구조 검사 9개를 모두 통과했지만, `dlopen()`으로 불러오면 `SIGILL`로 종료했다. 실패 주소를 원본의 `.init`과 대조하니 로더가 복원 코드를 거치기 전에 XOR로 바뀐 초기화 명령을 실행하고 있었다. [재현과 원인 분석](portfolio_audit/profile_e_failures.md)
+
+현재는 `ET_DYN`에서 동적 플래그 `DF_1_PIE`가 확인돼야 변환을 시작한다. 이 기준은 일반 공유 라이브러리와 해당 표시가 없는 구형 PIE를 함께 거부한다. 지원 형식은 little-endian ELF32/i386 및 ELF64/x86-64의 `ET_EXEC`와 위 조건의 PIE다. 형식이 맞아도 복원 코드를 넣을 여유 공간이 부족하면 거부한다.
+
+## 검증
+
+수정 후 Ubuntu 22.04 x86-64에서 **심볼·입력 판별 23/23**, **실행 동작·파일 구조 22/22**를 통과했다. 전자는 변환 전후 GNU `nm` 심볼 비교와 잘못된 입력의 거부를 본다. 후자는 변환한 실행 파일에 같은 인자와 입력을 주고, 마커를 제외한 표준 출력·표준 오류·종료 상태와 변경된 파일 범위를 검사한다. ELF32 실행 사례에는 i386 실행을 지원하는 커널과 32비트 동적 로더가 필요하다. [심볼 검사 코드](portfolio_audit/tools/run_baseline.py) · [실행·구조 검사 코드](portfolio_audit/tools/run_profile_e.py)
+
+다음 명령은 현재 커밋을 임시 디렉터리에 풀어 다시 빌드하고, 그 안에서만 검사 결과를 생성한다. Python 3와 GNU binutils가 필요하다.
 
 ```sh
-./woody_woodpacker <ELF-path>
-./woody_woodpacker <ELF-path> 0123456789abcdef
-./woody_woodpacker <ELF-path> 0x0123456789abcdef
-./woody [args...]
+audit_dir=$(mktemp -d)
+git archive HEAD | tar -x -C "$audit_dir"
+(
+  cd "$audit_dir" &&
+  make &&
+  cp woody_woodpacker portfolio_audit/bin/ &&
+  python3 portfolio_audit/tools/run_baseline.py &&
+  python3 portfolio_audit/tools/run_profile_e.py
+)
 ```
-
-key는 prefix를 제외하고 정확히 16개의 hexadecimal digit이어야 합니다. 생략하면
-8 bytes를 `/dev/urandom`에서 읽습니다. 변환 결과는 현재 디렉터리의 고정 이름
-`woody`로 생성되며 실행 시 marker 한 줄을 먼저 출력합니다. ELF32 결과를
-실행하려면 host가 해당 32-bit ABI를 실행할 수 있어야 합니다.
-
-## 수정 전 검증 결과
-
-| 범위 | 결과 |
-|---|---|
-| 비교 기준 | 원본과 동일한 argv/stdin/environment의 동작 + ELF 구조 invariant |
-| PROFILE E 입력 | 8 fixtures · 22 cases |
-| 결과 | PASS 21 · PARTIAL 0 · FAIL 0 · CRASH 1 |
-| 대표 관찰 | E15 shared object를 `dlopen()`하면 packed artifact가 `SIGILL` |
-
-PROFILE E에서는 ELF32/64 실행 파일, PIE, static, stripped, argv, stdout/stderr,
-exit status, binary stdin, 환경 변수, key 경계값과 구조 변경을 확인했습니다.
-별도의 adapted PROFILE B는 15 fixtures/23 cases에서 PASS 23을 기록했습니다.
-admitted input의 GNU `nm` symbol metadata 보존과 예상된 입력 거부를 본 보조
-검증이며, 실행 성공을 검증한 수치가 아닙니다.
-
-전체 결과: [`portfolio_audit/profile_e_test_results.md`](portfolio_audit/profile_e_test_results.md)
-
-## 확인된 한계
-
-- `dlopen()`은 `e_entry`를 거치지 않으므로 일반 shared object는 변환 전에 거부합니다.
-  실행 파일과 구분하기 위해 `ET_DYN`은 동적 테이블의 `DF_1_PIE` 표시를 요구합니다.
-  이 표시가 없는 구형 PIE도 이 정책에 따라 거부합니다.
-- payload가 들어갈 실행 가능 segment의 page-tail 공간이 없으면 변환을 거부합니다.
-- big-endian ELF, i386/x86-64 이외의 machine, `ET_REL`, archive는 지원 범위 밖입니다.
-
-## 상세 문서
-
-- [Audit 개요](portfolio_audit/README.md)
-- [Architecture](portfolio_audit/architecture.md)
-- [기능 범위](portfolio_audit/feature_inventory.md)
-- [PROFILE E failure 분석](portfolio_audit/profile_e_failures.md)
-- [설계 근거와 주장 경계](portfolio_audit/design_rationale.md)
