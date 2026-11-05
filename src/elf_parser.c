@@ -83,6 +83,78 @@ static int	validate_phdr_table_64(t_unit *unit)
 	return (OK);
 }
 
+/* A shared object can have both a nonzero entry and PT_INTERP (e.g. libc).
+ * Require the executable's DF_1_PIE marker, including for static PIE. */
+static int	has_pie_flag(const t_unit *unit, uint64_t offset, uint64_t size)
+{
+	Elf32_Dyn	dyn32;
+	Elf64_Dyn	dyn64;
+	uint64_t	step;
+	int64_t		tag;
+	uint64_t	value;
+	int			pie;
+
+	step = sizeof(dyn64);
+	if (unit->elf_class == ELFCLASS32)
+		step = sizeof(dyn32);
+	if (!CHECK_RANGE(offset, size, unit->limit) || size % step != 0)
+		return (ERR_INVALID_PHDR);
+	pie = 0;
+	while (size >= step)
+	{
+		if (unit->elf_class == ELFCLASS32)
+		{
+			ft_memcpy(&dyn32, unit->base + offset, sizeof(dyn32));
+			tag = dyn32.d_tag;
+			value = dyn32.d_un.d_val;
+		}
+		else
+		{
+			ft_memcpy(&dyn64, unit->base + offset, sizeof(dyn64));
+			tag = dyn64.d_tag;
+			value = dyn64.d_un.d_val;
+		}
+		if (tag == DT_NULL)
+			return (pie ? OK : ERR_NOT_PIE);
+		if (tag == DT_FLAGS_1 && (value & DF_1_PIE))
+			pie = 1;
+		offset += step;
+		size -= step;
+	}
+	return (ERR_INVALID_PHDR);
+}
+
+static int	validate_executable(const t_unit *unit)
+{
+	uint16_t	i;
+	Elf32_Phdr	*ph32;
+	Elf64_Phdr	*ph64;
+
+	if (unit->elf_class == ELFCLASS32)
+	{
+		if (unit->ElfN_Ehdr.Ehdr32->e_type == ET_EXEC)
+			return (OK);
+		for (i = 0; i < unit->ElfN_Ehdr.Ehdr32->e_phnum; i++)
+		{
+			ph32 = &unit->ElfN_Phdr.Phdr32[i];
+			if (ph32->p_type == PT_DYNAMIC)
+				return (has_pie_flag(unit, ph32->p_offset, ph32->p_filesz));
+		}
+	}
+	else
+	{
+		if (unit->ElfN_Ehdr.Ehdr64->e_type == ET_EXEC)
+			return (OK);
+		for (i = 0; i < unit->ElfN_Ehdr.Ehdr64->e_phnum; i++)
+		{
+			ph64 = &unit->ElfN_Phdr.Phdr64[i];
+			if (ph64->p_type == PT_DYNAMIC)
+				return (has_pie_flag(unit, ph64->p_offset, ph64->p_filesz));
+		}
+	}
+	return (ERR_NOT_PIE);
+}
+
 int	parse_elf_header(t_unit *unit)
 {
 	int	err;
@@ -100,6 +172,10 @@ int	parse_elf_header(t_unit *unit)
 	if (err != OK)
 		return (err);
 	if (unit->elf_class == ELFCLASS32)
-		return (validate_phdr_table_32(unit));
-	return (validate_phdr_table_64(unit));
+		err = validate_phdr_table_32(unit);
+	else
+		err = validate_phdr_table_64(unit);
+	if (err != OK)
+		return (err);
+	return (validate_executable(unit));
 }

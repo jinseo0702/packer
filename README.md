@@ -18,7 +18,7 @@ section까지 다루며 복잡도를 넓히기보다 program header와 loader의
 ## 핵심 기능
 
 - little-endian `ELFCLASS32`/`EM_386`, `ELFCLASS64`/`EM_X86_64` 처리
-- `ET_EXEC`와 `ET_DYN` 입력 및 program header 범위 검증
+- `ET_EXEC` 및 `DF_1_PIE` 표시가 있는 `ET_DYN` 실행 파일을 처리하고 program header 범위를 검증
 - file offset이 0이 아닌 `R`, `R|X`, `R|W|X` `PT_LOAD`의 file-backed bytes XOR 변환
 - decoder stub, 16-byte marker, 원래 entry, key, segment metadata 직렬화
 - 실행 가능한 기존 segment의 page-tail에 payload 삽입
@@ -76,7 +76,7 @@ key는 prefix를 제외하고 정확히 16개의 hexadecimal digit이어야 합�
 `woody`로 생성되며 실행 시 marker 한 줄을 먼저 출력합니다. ELF32 결과를
 실행하려면 host가 해당 32-bit ABI를 실행할 수 있어야 합니다.
 
-## 검증 결과
+## 수정 전 검증 결과
 
 | 범위 | 결과 |
 |---|---|
@@ -95,9 +95,9 @@ admitted input의 GNU `nm` symbol metadata 보존과 예상된 입력 거부를 
 
 ## 확인된 한계
 
-- E15에서 parser가 shared object도 `ET_DYN`으로 받아들이지만 `dlopen()`은
-  `e_entry`를 거치지 않습니다. 암호화된 `.init`이 decoder보다 먼저 실행되어
-  `SIGILL`이 발생했으며, 이 문제는 현재 소스에서 해결되지 않았습니다.
+- `dlopen()`은 `e_entry`를 거치지 않으므로 일반 shared object는 변환 전에 거부합니다.
+  실행 파일과 구분하기 위해 `ET_DYN`은 동적 테이블의 `DF_1_PIE` 표시를 요구합니다.
+  이 표시가 없는 구형 PIE도 이 정책에 따라 거부합니다.
 - payload가 들어갈 실행 가능 segment의 page-tail 공간이 없으면 변환을 거부합니다.
 - big-endian ELF, i386/x86-64 이외의 machine, `ET_REL`, archive는 지원 범위 밖입니다.
 

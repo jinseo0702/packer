@@ -30,6 +30,7 @@
 	X(ERR_INVALID_CLASS, "Invalid ELF class") \
 	X(ERR_INVALID_ENDIAN, "Only little-endian supported") \
 	X(ERR_INVALID_TYPE, "Invalid ELF type (must be ET_EXEC or ET_DYN)") \
+	X(ERR_NOT_PIE, "ET_DYN input must be a PIE executable") \
 	X(ERR_INVALID_MACHINE, "Invalid machine type") \
 	X(ERR_INVALID_PHDR, "Invalid program header table") \
 	X(ERR_NO_LOAD_SEGMENT, "No PT_LOAD segment found") \
